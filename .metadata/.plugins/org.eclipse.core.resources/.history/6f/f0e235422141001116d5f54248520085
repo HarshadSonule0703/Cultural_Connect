@@ -1,6 +1,0 @@
-package com.cultureconnect.authservice.enums;
-
-public enum Role {
-
-	CITIZEN,PROVIDER,RESEARCHER,MANAGER,ADMIN,COMPLIANCE,AUDITOR
-}
