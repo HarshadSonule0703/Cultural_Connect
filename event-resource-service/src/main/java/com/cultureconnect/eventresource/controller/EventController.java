@@ -1,0 +1,195 @@
+package com.cultureconnect.eventresource.controller;
+import jakarta.validation.Valid;
+
+import lombok.RequiredArgsConstructor;
+ 
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
+ 
+import org.springframework.web.bind.annotation.*;
+ 
+import com.cultureconnect.eventresource.dto.*;
+
+import com.cultureconnect.eventresource.service.EventService;
+ 
+import java.util.List;
+ 
+/**
+
+* REST Controller for managing Event entities.
+
+* Handles incoming HTTP requests and maps them to the appropriate EventService methods.
+
+*/
+
+@RequiredArgsConstructor
+
+@RestController
+
+@RequestMapping("/api/events")
+
+public class EventController {
+ 
+    private static final Logger logger = LoggerFactory.getLogger(EventController.class);
+ 
+    
+
+    private final EventService eventService;
+ 
+    /**
+
+     * Creates a new event entry.
+
+     * * @param request The data transfer object containing event details.
+
+     * @return The created event as an {@link EventResponseDto}.
+
+     */
+
+    @PostMapping("/addevent")
+
+    public EventResponseDto createEvent(@Valid @RequestBody EventRequestDto request) {
+
+        logger.info("REST request to create new event: {}", request.getTitle());
+
+        EventResponseDto createdEvent = eventService.createEvent(request);
+
+        logger.info("Event successfully created with ID: {}", createdEvent.getEventId());
+
+        return createdEvent;
+
+    }
+ 
+    /**
+
+     * Retrieves all events stored in the database.
+
+     * * @return A list of {@link EventResponseDto} containing all event records.
+
+     */
+
+    @GetMapping("/getallevents")
+
+    public List<EventResponseDto> getAllEvents() {
+
+        logger.info("REST request to fetch all events");
+
+        List<EventResponseDto> events = eventService.getAllEvents();
+
+        logger.debug("Total events fetched: {}", events.size());
+
+        return events;
+
+    }
+ 
+    /**
+
+     * Retrieves details of a specific event by its ID.
+
+     * * @param id The unique identifier of the event.
+
+     * @return The event details as an {@link EventResponseDto}.
+
+     */
+
+    @GetMapping("/{id}")
+
+    public EventResponseDto getEventById(@PathVariable Long id) {
+
+        logger.info("REST request to fetch event with id: {}", id);
+
+        return eventService.getEventById(id);
+
+    }
+ 
+    /**
+
+     * Updates an existing event's information.
+
+     * * @param id      The ID of the event to be updated.
+
+     * @param request The updated data for the event.
+
+     * @return The updated {@link EventResponseDto}.
+
+     */
+
+    @PutMapping("/{id}")
+
+    public EventResponseDto updateEvent(@PathVariable Long id,
+
+                                        @Valid @RequestBody EventRequestDto request) {
+
+        logger.info("REST request to update event with id: {}", id);
+
+        EventResponseDto updatedEvent = eventService.updateEvent(id, request);
+
+        logger.info("Successfully updated event id: {}", id);
+
+        return updatedEvent;
+
+    }
+ 
+    /**
+
+     * Deletes an event record from the system.
+
+     * * @param id The unique identifier of the event to delete.
+
+     * @return A confirmation message string.
+
+     */
+
+    @DeleteMapping("/{id}")
+
+    public String deleteEvent(@PathVariable Long id) {
+
+        logger.warn("REST request to delete event with id: {}", id);
+
+        eventService.deleteEvent(id);
+
+        logger.info("Event with id: {} successfully deleted", id);
+
+        return "Event deleted successfully";
+
+    }
+
+
+    /**
+
+     * Retrieves all events with status APPROVED.
+
+     *
+
+     * @return List of approved events
+
+     */
+
+    @GetMapping("/approved")
+
+    public List<EventResponseDto> getApprovedEvents() {
+
+        logger.info("REST request to fetch all approved events");
+
+        return eventService.getAllApprovedEvents();
+
+    }
+    
+    
+    @GetMapping("/program/{programId}")
+
+    public List<Long> getEventsIdByProgramId(@PathVariable Long programId) {
+
+        logger.info("REST request to fetch all approved events");
+
+        return eventService.getEventsIdByProgramId(programId);
+
+    }
+    
+
+}
+ 
+
+ 
+ 

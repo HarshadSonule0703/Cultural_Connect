@@ -1,0 +1,13 @@
+package com.example.demo.repository;
+ 
+import java.util.List;
+ 
+import org.springframework.data.jpa.repository.JpaRepository;
+ 
+import com.example.demo.entity.CitizenDocument;
+ 
+public interface CitizenDocumentRepository extends JpaRepository<CitizenDocument, Long> {
+ 
+    List<CitizenDocument> findByCitizenId(Long citizenId);
+
+}

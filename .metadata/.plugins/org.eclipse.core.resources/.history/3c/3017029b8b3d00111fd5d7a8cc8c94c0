@@ -1,0 +1,75 @@
+package com.cultureconnect.ComplianceAudit.controller;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cultureconnect.ComplianceAudit.dto.ComplianceRequestDTO;
+import com.cultureconnect.ComplianceAudit.dto.ComplianceResponseDTO;
+import com.cultureconnect.ComplianceAudit.service.ComplianceRecordService;
+import com.cultureconnect.programgrant.dto.CulturalProgramRequestDto;
+import com.cultureconnect.programgrant.dto.CulturalProgramResponseDto;
+
+import jakarta.validation.Valid; // Validation ensure korbe
+
+@RestController
+@RequestMapping("/compliance")
+public class ComplianceRecordController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ComplianceRecordController.class);
+
+    @Autowired
+    private ComplianceRecordService service;
+
+    @PostMapping("/create")
+    public ResponseEntity<ComplianceResponseDTO> createCompliance(@Valid @RequestBody ComplianceRequestDTO requestDto) {
+        logger.info("Received request to create compliance: {}", requestDto);
+        ComplianceResponseDTO response = service.createCompliance(requestDto);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+    
+    @PostMapping("/addNewProgram")
+    public ResponseEntity<CulturalProgramResponseDto> createProgram(@Valid @RequestBody CulturalProgramRequestDto requestDto) {
+        logger.info("REST Request: Create new Cultural Program with title: {}", requestDto.getTitle());
+        
+        CulturalProgramResponseDto createdProgram = programService.createProgram(requestDto);
+        
+        logger.info("REST Response: Program successfully created with ID: {}", createdProgram.getProgramId());
+        return new ResponseEntity<>(createdProgram, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<ComplianceResponseDTO>> getAllCompliance() {
+        return ResponseEntity.ok(service.getAllCompliance());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ComplianceResponseDTO> getComplianceById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getComplianceById(id));
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ComplianceResponseDTO> updateCompliance(
+            @PathVariable Long id, 
+            @Valid @RequestBody ComplianceRequestDTO requestDto) {
+        return ResponseEntity.ok(service.updateCompliance(id, requestDto));
+    }
+
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<String> deleteCompliance(@PathVariable Long id) {
+        service.deleteCompliance(id);
+        return ResponseEntity.ok("Compliance record deleted successfully with id: " + id);
+    }
+}

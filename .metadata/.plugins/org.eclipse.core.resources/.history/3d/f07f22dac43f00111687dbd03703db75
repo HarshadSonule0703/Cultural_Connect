@@ -1,0 +1,30 @@
+package com.cultureconnect.eventresource.dto;
+ 
+
+import com.cultureconnect.eventresource.enums.ResourceType;
+import com.cultureconnect.eventresource.enums.Status;
+
+import jakarta.validation.constraints.*;
+import lombok.Data;
+ 
+/**
+ * DTO for Resource creation/update
+ */
+@Data
+public class ResourceRequestDTO {
+ 
+    @NotNull(message = "Event ID is required")
+    private Long eventId;
+ 
+    @NotNull(message = "Type is required")
+    private ResourceType type;
+ 
+    @Min(value = 1, message = "Quantity must be greater than 0")
+    private int quantity;
+ 
+    @NotNull(message = "Status is required")
+    private Status status;
+ 
+   
+}
+ 

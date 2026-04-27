@@ -1,0 +1,7 @@
+package com.cultureconnect.ComplianceAudit.enums;
+
+public enum ComplianceType {
+    PROGRAM,
+    GRANT,
+    EVENT
+}

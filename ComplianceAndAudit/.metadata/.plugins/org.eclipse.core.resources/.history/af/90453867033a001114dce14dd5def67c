@@ -1,0 +1,13 @@
+spring.application.name=CultureConnect
+server.port=1249
+#Database connection properties
+spring.datasource.url=jdbc:mysql://localhost:3306/culture_connect
+spring.datasource.username=root
+spring.datasource.password=RadhaRadha*8
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+ 
+ #hibernate properties
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+server.error.include-message=always

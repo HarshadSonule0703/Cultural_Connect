@@ -1,0 +1,43 @@
+package com.example.demo.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "citizen_document")
+public class CitizenDocument {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long documentId;
+
+    @NotNull(message = "Citizen ID is required")
+    @Column(name = "citizen_id", nullable = false)
+    private Long citizenId;
+
+    @NotNull(message = "Document type is required")
+    @Column(nullable = false, length = 30)
+    private String docType;
+
+    @NotBlank(message = "File URI must not be blank")
+    @Size(max = 255, message = "File URI must not exceed 255 characters")
+    @Column(nullable = false)
+    private String fileUri;
+
+    @NotNull(message = "Verification status is required")
+    @Column(nullable = false, length = 20)
+    private String verificationStatus;
+}

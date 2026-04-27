@@ -1,0 +1,261 @@
+package com.cultureconnect.eventresource.serviceimpl;
+ 
+import java.util.List;
+ 
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
+
+import org.springframework.stereotype.Service;
+ 
+import com.cultureconnect.eventresource.dto.EventRequestDto;
+
+import com.cultureconnect.eventresource.dto.EventResponseDto;
+
+import com.cultureconnect.eventresource.dto.ProgramDto;
+
+import com.cultureconnect.eventresource.exception.ResourceNotFoundException;
+
+import com.cultureconnect.eventresource.feign.ProgramClient;
+
+import com.cultureconnect.eventresource.entity.Event;
+
+import com.cultureconnect.eventresource.enums.Status;
+
+import com.cultureconnect.eventresource.repository.EventRepository;
+
+import com.cultureconnect.eventresource.repository.ResourceRepository;
+
+import com.cultureconnect.eventresource.service.EventService;
+
+import com.cultureconnect.eventresource.util.EventMapper;
+ 
+import jakarta.transaction.Transactional;
+ 
+/**
+
+* Event Service implementation following Microservice architecture.
+
+* Communicates with Program Service via Feign client instead of DB access.
+
+*/
+
+@Service
+
+public class EventServiceImpl implements EventService {
+ 
+    private static final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
+ 
+    private final EventRepository eventRepository;
+
+    private final ResourceRepository resourceRepository;
+
+    private final ProgramClient programClient;
+ 
+    public EventServiceImpl(EventRepository eventRepository,
+
+                            ResourceRepository resourceRepository,
+
+                            ProgramClient programClient) {
+
+        this.eventRepository = eventRepository;
+
+        this.resourceRepository = resourceRepository;
+
+        this.programClient = programClient;
+
+    }
+ 
+    /**
+
+     * Creates a new Event.
+
+     * Validates Program existence via Program Service (Feign).
+
+     */
+
+    @Override
+
+    public EventResponseDto createEvent(EventRequestDto request) {
+
+        logger.info("Attempting to create event: {}", request.getTitle());
+ 
+        // ✅ Validate Program via Feign
+
+        ProgramDto program;
+
+        try {
+
+            program = programClient.getProgramById(request.getProgramId());
+
+        } catch (Exception ex) {
+
+            logger.error("Program validation failed for ID: {}", request.getProgramId());
+
+            throw new ResourceNotFoundException("Program not found with id: " + request.getProgramId());
+
+        }
+ 
+        // ✅ Map DTO to entity
+
+        Event event = EventMapper.toEntity(request);
+
+        event.setProgramId(program.getProgramId());
+ 
+        Event savedEvent = eventRepository.save(event);
+ 
+        logger.info("Event created successfully with ID: {}", savedEvent.getEventId());
+
+        return EventMapper.toResponseDto(savedEvent);
+
+    }
+ 
+    /**
+
+     * Fetch all events.
+
+     */
+
+    @Override
+
+    public List<EventResponseDto> getAllEvents() {
+
+        logger.info("Fetching all events");
+ 
+        return eventRepository.findAll()
+
+                .stream()
+
+                .map(EventMapper::toResponseDto)
+
+                .toList();
+
+    }
+ 
+    /**
+
+     * Fetch event by ID.
+
+     */
+
+    @Override
+
+    public EventResponseDto getEventById(Long id) {
+
+        logger.info("Fetching event by ID: {}", id);
+ 
+        Event event = eventRepository.findById(id)
+
+                .orElseThrow(() -> {
+
+                    logger.warn("Event not found with ID: {}", id);
+
+                    return new ResourceNotFoundException("Event not found with id: " + id);
+
+                });
+ 
+        return EventMapper.toResponseDto(event);
+
+    }
+ 
+    /**
+
+     * Update an existing Event.
+
+     */
+
+    @Override
+
+    public EventResponseDto updateEvent(Long id, EventRequestDto request) {
+
+        logger.info("Updating Event ID: {}", id);
+ 
+        Event event = eventRepository.findById(id)
+
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+ 
+        // ✅ Validate updated Program via Feign
+
+        try {
+
+            programClient.getProgramById(request.getProgramId());
+
+        } catch (Exception ex) {
+
+            logger.error("Program validation failed for ID: {}", request.getProgramId());
+
+            throw new ResourceNotFoundException("Program not found with id: " + request.getProgramId());
+
+        }
+ 
+        // ✅ Update fields
+
+        event.setTitle(request.getTitle());
+
+        event.setLocation(request.getLocation());
+
+        event.setDate(request.getDate());
+
+        event.setStatus(request.getStatus());
+
+        event.setProgramId(request.getProgramId());
+ 
+        Event updatedEvent = eventRepository.save(event);
+
+        logger.info("Event updated successfully with ID: {}", id);
+ 
+        return EventMapper.toResponseDto(updatedEvent);
+
+    }
+ 
+    /**
+
+     * Delete an Event and its related resources.
+
+     */
+
+    @Override
+
+    @Transactional
+
+    public void deleteEvent(Long id) {
+
+        logger.warn("Deleting Event ID: {}", id);
+ 
+        if (!eventRepository.existsById(id)) {
+
+            logger.error("Event not found with ID: {}", id);
+
+            throw new ResourceNotFoundException("Event not found with id: " + id);
+
+        }
+ 
+        // ✅ Delete dependent resources first
+
+        resourceRepository.deleteByEventId(id);
+ 
+        eventRepository.deleteById(id);
+
+        logger.info("Event and its resources deleted successfully for ID: {}", id);
+
+    }
+
+
+    @Override
+
+    public List<EventResponseDto> getAllApprovedEvents() {
+
+        logger.info("Fetching all APPROVED events");
+ 
+        return eventRepository.findByStatus(Status.APPROVED)
+
+                .stream()
+
+                .map(EventMapper::toResponseDto)
+
+                .toList();
+
+    }
+
+}
+ 

@@ -1,0 +1,28 @@
+package com.cultureconnect.eventresource.dto;
+
+import java.time.LocalDate;
+
+import com.cultureconnect.eventresource.enums.Status;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class EventResponseDto {
+
+    private Long eventId;
+    private String title;
+    private String location;
+    private LocalDate date;
+    private Status status;
+//    private String programTitle;
+
+    // Flattened reference to the parent Program
+    private Long programId;
+
+
+    // List of resource IDs associated with this event
+
+}

@@ -1,0 +1,24 @@
+package com.cultureconnect.eventresource.service;
+ 
+import java.util.List;
+
+import com.cultureconnect.eventresource.dto.EventRequestDto;
+import com.cultureconnect.eventresource.dto.EventResponseDto;
+ 
+public interface EventService {
+ 
+    EventResponseDto createEvent(EventRequestDto request);
+ 
+    List<EventResponseDto> getAllEvents();
+ 
+    EventResponseDto getEventById(Long id);
+ 
+    EventResponseDto updateEvent(Long id, EventRequestDto request);
+ 
+    void deleteEvent(Long id);
+    
+    public List<EventResponseDto> getAllApprovedEvents();
+
+	List<Long> getEventsIdByProgramId(Long programId);
+}
+ 

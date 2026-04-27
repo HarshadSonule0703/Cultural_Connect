@@ -1,0 +1,41 @@
+spring.application.name=heritage-management
+ 
+ 
+# MySQL Database Connection
+spring.datasource.url=jdbc:mysql://localhost:3306/culture_connect_project?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=Harshad#0703
+ 
+ 
+# MySQL Driver
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+ 
+ 
+# JPA / Hibernate Configuration
+#spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+#spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQLDialect
+
+ 
+# Show SQL Queries in Console
+#spring.jpa.show-sql=true
+
+#spring.jpa.properties.hibernate.format_sql=true
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+eureka.instance.prefer-ip-address=true
+spring.config.import=optional:configserver:http://localhost:8711
+# Server Port (optional)
+server.port=8086
+
+# Enable file logging
+logging.file.name=logs/application.log
+
+# Log level
+logging.level.root=INFO
+logging.level.com.yourpackage=DEBUG
+
+# Log format
+logging.pattern.file=%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n

@@ -1,0 +1,42 @@
+package com.example.demo.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public class CitizenDocumentDTO {
+
+    @NotNull(message = "Citizen ID is required")
+    private Long citizenId;
+
+    @NotBlank(message = "Document type is required")
+    private String docType;
+
+    @NotBlank(message = "File URI is required")
+    private String fileUri;
+
+    // Getters and Setters
+
+    public Long getCitizenId() {
+        return citizenId;
+    }
+
+    public void setCitizenId(Long citizenId) {
+        this.citizenId = citizenId;
+    }
+
+    public String getDocType() {
+        return docType;
+    }
+
+    public void setDocType(String docType) {
+        this.docType = docType;
+    }
+
+    public String getFileUri() {
+        return fileUri;
+    }
+
+    public void setFileUri(String fileUri) {
+        this.fileUri = fileUri;
+    }
+}

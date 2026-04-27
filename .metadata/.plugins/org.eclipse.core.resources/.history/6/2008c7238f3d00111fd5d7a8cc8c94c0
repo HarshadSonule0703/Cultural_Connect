@@ -1,0 +1,5 @@
+package com.cultureconnect.programgrant.feign;
+
+public interface ComplianceClient {
+
+}

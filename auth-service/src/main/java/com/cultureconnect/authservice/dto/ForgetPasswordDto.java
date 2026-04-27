@@ -1,0 +1,10 @@
+package com.cultureconnect.authservice.dto;
+
+import lombok.Data;
+
+@Data
+public class ForgetPasswordDto {
+    private String email;       // or phone
+    private String password;
+}
+

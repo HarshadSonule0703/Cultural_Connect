@@ -1,0 +1,128 @@
+package com.cultureconnect.programgrant.serviceimpl;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cultureconnect.programgrant.dto.CulturalProgramResponseDto;
+import com.cultureconnect.programgrant.dto.GrantApplicationRequestDto;
+import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
+import com.cultureconnect.programgrant.dto.GrantApprovalDto;
+import com.cultureconnect.programgrant.entity.CulturalProgram;
+import com.cultureconnect.programgrant.entity.GrantApplication;
+import com.cultureconnect.programgrant.enums.Status;
+import com.cultureconnect.programgrant.exception.ResourceNotFoundException;
+import com.cultureconnect.programgrant.feign.CitizenClient;
+import com.cultureconnect.programgrant.repository.CulturalProgramRepository;
+import com.cultureconnect.programgrant.repository.GrantApplicationRepository;
+import com.cultureconnect.programgrant.service.GrantApplicationService;
+import com.cultureconnect.programgrant.service.GrantService;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * SERVICE IMPLEMENTATION: GrantApplicationServiceImpl Manages the transition
+ * from a citizen's request to an official Grant disbursal.
+ */
+@Service
+@RequiredArgsConstructor
+public class GrantApplicationServiceImpl implements GrantApplicationService {
+
+	private static final Logger logger = LoggerFactory.getLogger(GrantApplicationServiceImpl.class);
+
+	private final CitizenClient citizenClient;
+
+	private final GrantApplicationRepository applicationRepository;
+	private final CulturalProgramRepository programRepository;
+	private final GrantService grantService;
+
+	/**
+	 * Submits a new application. Note: submittedDate is handled automatically
+	 * by @CreationTimestamp in the Entity.
+	 */
+	@Override
+	@Transactional
+	public GrantApplicationResponseDto submitApplication(GrantApplicationRequestDto dto) {
+
+		// ✅ Validate citizen via Feign
+		citizenClient.getCitizenById(dto.getCitizenId());
+
+		// ✅ Validate program locally
+		CulturalProgram program=programRepository.findById(dto.getProgramId())
+				.orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + dto.getProgramId()));
+
+		GrantApplication application = new GrantApplication();
+		application.setCitizenId(dto.getCitizenId());
+		application.setProgramId(dto.getProgramId());
+		application.setStatus(Status.PENDING);
+
+		return mapToResponseDto(applicationRepository.save(application),program.getName());
+	}
+
+	/**
+	 * Updates application status. If APPROVED, triggers financial disbursal via
+	 * GrantService.
+	 */
+	@Override
+	@Transactional
+	public GrantApplicationResponseDto updateApplicationStatus(Long id, GrantApprovalDto approvalDto) {
+		logger.info("Service: Updating Application ID: {} to status: {}", id, approvalDto.getStatus());
+
+		GrantApplication app = applicationRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + id));
+
+		// Business Logic: If status is being changed to APPROVED, a grant must be
+		// created
+		if (approvalDto.getStatus() == Status.APPROVED) {
+			if (approvalDto.getApprovedAmount() == null || approvalDto.getApprovedAmount() <= 0) {
+				throw new RuntimeException("Approval requires a valid positive grant amount.");
+			}
+
+			logger.info("Service: Triggering automatic grant disbursal for Application ID: {}", id);
+			grantService.disburseGrant(app, approvalDto.getApprovedAmount());
+		}
+
+		app.setStatus(approvalDto.getStatus());
+		return mapToResponseDto(applicationRepository.save(app));
+	}
+
+	@Override
+	public List<GrantApplicationResponseDto> getApplicationsByCitizen(Long citizenId) {
+		return applicationRepository.findByCitizenId(citizenId).stream().map(this::mapToResponseDto).toList();
+
+	}
+
+	@Override
+	public List<GrantApplicationResponseDto> getAllApplications() {
+		return applicationRepository.findAll().stream().map(this::mapToResponseDto).toList();
+	}
+
+	@Override
+	public GrantApplicationResponseDto getApplicationById(Long id) {
+		return applicationRepository.findById(id).map(this::mapToResponseDto)
+				.orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + id));
+	}
+
+	@Override
+	public List<GrantApplicationResponseDto> getApplicationsByStatus(Status status) {
+		return applicationRepository.findByStatus(status).stream().map(this::mapToResponseDto).toList();
+	}
+
+	/**
+	 * INTERNAL MAPPER: Entity -> Response DTO Fix: Maps program.getName() instead
+	 * of getTitle().
+	 */
+	private GrantApplicationResponseDto mapToResponseDto(GrantApplication app,String programName) {
+		return new GrantApplicationResponseDto(app.getApplicationId(), app.getCitizenId(), app.getProgramId(), programName, // program
+																														// name
+																														// fetched
+																														// only
+																														// if
+																														// really
+																														// needed
+				app.getSubmittedDate(), app.getStatus());
+	}
+}

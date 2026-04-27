@@ -1,0 +1,178 @@
+/*
+ * package com.example.demo.serviceImpl;
+ * 
+ * import java.util.List;
+ * 
+ * import org.springframework.stereotype.Service;
+ * 
+ * import com.example.demo.dto.CitizenDTO; import
+ * com.example.demo.dto.CitizenDocumentDTO; import
+ * com.example.demo.entity.Citizen; import
+ * com.example.demo.entity.CitizenDocument; import
+ * com.example.demo.exception.ResourceNotFoundException; import
+ * com.example.demo.repository.CitizenRepository; import
+ * com.example.demo.service.CitizenService;
+ * 
+ * @Service public class CitizenServiceImpl implements CitizenService {
+ * 
+ * private final CitizenRepository repository;
+ * 
+ * public CitizenServiceImpl(CitizenRepository repository) { this.repository =
+ * repository; }
+ * 
+ * @Override public Citizen registerCitizen(CitizenDTO dto) { Citizen c = new
+ * Citizen(); c.setName(dto.getName()); c.setDob(dto.getDob());
+ * c.setGender(dto.getGender()); c.setAddress(dto.getAddress());
+ * c.setContactInfo(dto.getContactInfo()); c.setStatus("ACTIVE");
+ * 
+ * return repository.save(c); }
+ * 
+ * @Override public Citizen getCitizenById(Long id) { return
+ * repository.findById(id) .orElseThrow(() -> new
+ * RuntimeException("Citizen not found")); }
+ * 
+ * @Override public List<Citizen> getAllCitizens() { return
+ * repository.findAll(); }
+ * 
+ * @Override public Citizen updateCitizen(Long id, CitizenDTO dto) { Citizen c =
+ * getCitizenById(id); c.setName(dto.getName()); c.setDob(dto.getDob()); return
+ * repository.save(c); }
+ * 
+ * @Override public void deleteCitizen(Long id) { repository.deleteById(id); }
+ * 
+ * @Override public CitizenDocument uploadDocument(Long id, CitizenDocumentDTO
+ * dto) {
+ * 
+ * Citizen citizen = getCitizenById(id);
+ * 
+ * CitizenDocument doc = new CitizenDocument();
+ * doc.setDocType(dto.getDocType()); doc.setFileUri(dto.getFileUri());
+ * doc.setVerificationStatus("PENDING"); doc.setCitizen(citizen);
+ * 
+ * return repository.save(doc); }
+ * 
+ * @Override public List<CitizenDocument> getDocuments(Long id) { return
+ * repository.findByCitizenCitizenId(id); }
+ * 
+ * @Override public void deleteDocument(Long documentId) {
+ * 
+ * Citizen doc = repository.findById(documentId) .orElseThrow(() -> new
+ * ResourceNotFoundException("Document not found"));
+ * 
+ * repository.delete(doc); } }
+ */
+package com.example.demo.serviceImpl;
+ 
+import java.util.List;
+ 
+import org.springframework.stereotype.Service;
+ 
+import com.example.demo.dto.CitizenDTO;
+import com.example.demo.dto.CitizenDocumentDTO;
+import com.example.demo.entity.Citizen;
+import com.example.demo.entity.CitizenDocument;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.repository.CitizenRepository;
+import com.example.demo.repository.CitizenDocumentRepository;
+import com.example.demo.service.CitizenService;
+ 
+@Service
+public class CitizenServiceImpl implements CitizenService {
+ 
+    private final CitizenRepository repository;
+    private final CitizenDocumentRepository documentRepository;
+ 
+    // ✅ Constructor Injection
+    public CitizenServiceImpl(CitizenRepository repository,
+                              CitizenDocumentRepository documentRepository) {
+        this.repository = repository;
+        this.documentRepository = documentRepository;
+    }
+ 
+    // ✅ REGISTER CITIZEN
+    @Override
+    public Citizen registerCitizen(CitizenDTO dto) {
+ 
+        Citizen c = new Citizen();
+        c.setName(dto.getName());
+        c.setDob(dto.getDob());
+        c.setGender(dto.getGender());
+        c.setAddress(dto.getAddress());
+        c.setContactInfo(dto.getContactInfo());
+        c.setStatus("ACTIVE");
+ 
+        return repository.save(c);
+    }
+
+    // ✅ GET BY ID
+    @Override
+    public Citizen getCitizenById(Long id) {
+ 
+        return repository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Citizen not found with ID: " + id));
+    }
+
+    // ✅ GET ALL
+    @Override
+    public List<Citizen> getAllCitizens() {
+        return repository.findAll();
+    }
+ 
+    // ✅ UPDATE CITIZEN
+    @Override
+    public Citizen updateCitizen(Long id, CitizenDTO dto) {
+ 
+        Citizen c = getCitizenById(id);
+ 
+        c.setName(dto.getName());
+        c.setDob(dto.getDob());
+        c.setGender(dto.getGender());
+        c.setAddress(dto.getAddress());
+        c.setContactInfo(dto.getContactInfo());
+ 
+        return repository.save(c);
+    }
+ 
+    // ✅ DELETE CITIZEN
+    @Override
+    public void deleteCitizen(Long id) {
+ 
+        Citizen c = getCitizenById(id); // ensures existence
+        repository.delete(c);
+    }
+ 
+    // ✅ UPLOAD DOCUMENT
+    @Override
+    public CitizenDocument uploadDocument(Long id, CitizenDocumentDTO dto) {
+ 
+        Citizen citizen = getCitizenById(id);
+ 
+        CitizenDocument doc = new CitizenDocument();
+        doc.setDocType(dto.getDocType());
+        doc.setFileUri(dto.getFileUri());
+        doc.setVerificationStatus("PENDING");
+        doc.setCitizen(citizen);
+ 
+        return documentRepository.save(doc); // ✅ FIXED
+    }
+
+    // ✅ GET DOCUMENTS
+    @Override
+    public List<CitizenDocument> getDocuments(Long id) {
+ 
+        return documentRepository.findByCitizenCitizenId(id); // ✅ CORRECT
+    }
+
+    // ✅ DELETE DOCUMENT
+    @Override
+    public void deleteDocument(Long documentId) {
+ 
+        CitizenDocument doc = documentRepository.findById(documentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Document not found with ID: " + documentId));
+ 
+        documentRepository.delete(doc);
+    }
+}
+ 
