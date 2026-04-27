@@ -35,12 +35,12 @@ public class WebSecurityConfig {
                 ).permitAll()
                 .pathMatchers("/cultureconnect/getUserById/{userId}",
                 		"/cultureconnect/userRegisterByAdmin",
-                		"/cultureconnect/audit_log").hasAnyAuthority("ADMIN")
+                		"/cultureconnect/audit_log").hasAnyRole("ADMIN")
                 
 
                 			  // ✅ AUDIT
                              .pathMatchers("/audit_log/**", "/audits/**")
-                             .hasAnyAuthority("ADMIN", "AUDITOR")
+                             .hasAnyRole("ADMIN", "AUDITOR")
 
                              // ✅ CITIZENS
                              .pathMatchers("/api/citizens/**")
