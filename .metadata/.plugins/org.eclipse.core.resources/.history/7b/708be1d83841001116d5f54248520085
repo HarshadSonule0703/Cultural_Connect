@@ -1,0 +1,13 @@
+package com.cultureconnect.authservice.service;
+
+
+import java.util.List;
+
+import com.cultureconnect.authservice.dto.AuditLogDto;
+import com.cultureconnect.authservice.model.AuditLog;
+
+public interface AuditLogService {
+
+	void createAuditLog(AuditLogDto dto,String status,String resource);
+	List<AuditLog> getAuditLogsByUser(Long userId);
+}

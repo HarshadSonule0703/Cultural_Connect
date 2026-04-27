@@ -1,0 +1,76 @@
+package com.cultureconnect.apigateway.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+
+@Configuration
+@EnableWebFluxSecurity
+public class WebSecurityConfig {
+
+    @Bean
+    public SecurityWebFilterChain securityWebFilterChain(
+            ServerHttpSecurity http,
+            JwtValidationWebFilter jwtValidationWebFilter) {
+
+        return http
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .cors(ServerHttpSecurity.CorsSpec::disable)
+            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+
+            // ✅ JWT validation filter
+            .addFilterAt(jwtValidationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+
+            .authorizeExchange(ex -> ex
+
+                // 1️⃣ PUBLIC AUTH ENDPOINTS
+                .pathMatchers(
+                    "/cultureconnect/login",
+                    "/cultureconnect/citizenRegister",
+                    "/cultureconnect/forgotPassword"
+                ).permitAll()
+                .pathMatchers("/cultureconnect/getUserById/{userId}",
+                		"/cultureconnect/userRegisterByAdmin",
+                		"/cultureconnect/audit_log").hasAnyAuthority("ADMIN")
+                
+                // 2️⃣ CITIZEN / ARTIST
+                .pathMatchers("/citizens/**")
+                    .hasAnyAuthority("CITIZEN", "ARTIST")
+
+                // 3️⃣ CULTURAL PROGRAMS & GRANTS
+                .pathMatchers("/programs/**", "/grants/**")
+                    .hasAnyAuthority("CULTURAL_OFFICER", "PROGRAM_MANAGER")
+
+                // 4️⃣ HERITAGE SITES & PRESERVATION
+                .pathMatchers("/heritage/**")
+                    .hasAuthority("CULTURAL_OFFICER")
+
+                // 5️⃣ EVENTS & RESOURCES
+                .pathMatchers("/events/**", "/resources/**")
+                    .hasAnyAuthority("CULTURAL_OFFICER", "PROGRAM_MANAGER")
+
+                // 6️⃣ COMPLIANCE MANAGEMENT
+                .pathMatchers("/compliance/**")
+                    .hasAuthority("COMPLIANCE_OFFICER")
+
+                // 7️⃣ AUDIT & REPORTING
+                .pathMatchers("/audit/**")
+                    .hasAnyAuthority("GOVERNMENT_AUDITOR", "ADMIN")
+
+                .pathMatchers("/reports/**", "/analytics/**")
+                    .hasAnyAuthority("PROGRAM_MANAGER", "ADMIN", "GOVERNMENT_AUDITOR")
+
+                // 8️⃣ USER / SYSTEM ADMIN
+                .pathMatchers("/admin/**")
+                    .hasAuthority("ADMIN")
+
+                // 🔒 Everything else secured
+                .anyExchange().authenticated()
+            )
+            .build();
+    }
+}

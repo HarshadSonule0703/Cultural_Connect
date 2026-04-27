@@ -1,0 +1,56 @@
+package com.cultureconnect.authservice.serviceimpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.cultureconnect.authservice.dto.UserDTO;
+import com.cultureconnect.authservice.enums.Role;
+import com.cultureconnect.authservice.model.User;
+import com.cultureconnect.authservice.repository.RegistrationLoginRepo;
+import com.cultureconnect.authservice.service.RegistrationService;
+
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class RegistrationServiceImpl implements RegistrationService {
+
+	@Autowired
+	private RegistrationLoginRepo registrationRepo;
+	
+	@Autowired
+	private PasswordEncoder bcryptEncoder;
+	
+	@Override
+	public UserDTO registerUser(UserDTO userDto) {
+		
+		User user = new User();
+		user.setName(userDto.getName());
+		user.setEmail(userDto.getEmail());
+		if(userDto.getRole() == null) {
+			user.setRole(Role.CITIZEN);
+		}else {
+			user.setRole(userDto.getRole());
+		}
+		user.setPhone(userDto.getPhone());
+		if(userDto.getStatus() == null) {
+			user.setStatus("ACTIVE");
+		}else {
+			user.setStatus(userDto.getStatus());
+		}
+		user.setPassword(bcryptEncoder.encode(userDto.getPassword()));
+		
+		registrationRepo.save(user);
+		
+		UserDTO userDTO2 = new UserDTO();
+		userDTO2.setUserId(user.getUserId());
+		userDTO2.setName(user.getName());
+		userDTO2.setEmail(user.getEmail());
+		userDTO2.setPhone(user.getPhone());
+		userDTO2.setStatus(user.getStatus());
+		
+		return userDTO2;
+	}
+
+}
