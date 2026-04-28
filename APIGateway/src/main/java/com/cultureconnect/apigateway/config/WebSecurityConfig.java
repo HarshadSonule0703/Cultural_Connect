@@ -31,11 +31,14 @@ public class WebSecurityConfig {
                 .pathMatchers(
                     "/cultureconnect/login",
                     "/cultureconnect/citizenRegister",
-                    "/cultureconnect/forgotPassword"
+                    "/cultureconnect/forgotPassword",
+                    "/api/citizens/register"
                 ).permitAll()
                 .pathMatchers("/cultureconnect/getUserById/{userId}",
                 		"/cultureconnect/userRegisterByAdmin",
-                		"/cultureconnect/audit_log").hasAnyRole("ADMIN")
+                		"/cultureconnect/audit_log",
+                		"/cultureconnect/getUserByRole/{role}",
+                		"/cultureconnect/deleteUserByAdmin/{userId}").hasAnyRole("ADMIN")
                 
 
                 			  // ✅ AUDIT
@@ -44,14 +47,14 @@ public class WebSecurityConfig {
 
                              // ✅ CITIZENS
                              .pathMatchers("/api/citizens/**")
-                             .hasAnyRole("CITIZEN", "ADMIN")
+                             .hasAnyRole("CITIZEN", "ADMIN","OFFICER","MANAGER")
 
                              // ✅ PROGRAMS & GRANTS
                              .pathMatchers("/api/programs/**")
                              .hasAnyRole("MANAGER", "ADMIN")
 
                              .pathMatchers("/api/applications/**")
-                             .hasAnyRole("CITIZEN", "OFFICER", "ADMIN")
+                             .hasAnyRole("CITIZEN", "OFFICER", "ADMIN","MANAGER	")
 
                              // ✅ COMPLIANCE
                              .pathMatchers("/compliance/**")
@@ -59,7 +62,7 @@ public class WebSecurityConfig {
 
                              // ✅ EVENTS & RESOURCES
                              .pathMatchers("/api/events/**", "/api/resources/**")
-                             .hasAnyRole("OFFICER","ADMIN")
+                             .hasAnyRole("OFFICER","ADMIN","MANAGER")
 
                              // ✅ HERITAGE
                              .pathMatchers("/api/heritage-sites/**", "/api/activities/**")

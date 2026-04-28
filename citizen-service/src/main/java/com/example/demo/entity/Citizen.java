@@ -24,38 +24,40 @@ import lombok.NoArgsConstructor;
 @Table(name = "citizen")
 public class Citizen {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long citizenId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long citizenId;
 
-    @NotBlank(message = "Name must not be blank")
-    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
-    @Column(nullable = false, length = 100)
-    private String name;
+	@NotBlank(message = "Name must not be blank")
+	@Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
+	@Column(nullable = false, length = 100)
+	private String name;
 
-    @NotNull(message = "Date of birth is required")
-    @Past(message = "Date of birth must be in the past")
-    @Column(nullable = false)
-    private LocalDate dob;
+	@NotNull(message = "Date of birth is required")
+	@Past(message = "Date of birth must be in the past")
+	@Column(nullable = false)
+	private LocalDate dob;
 
-    @NotNull(message = "Gender is required")
-    @Column(nullable = false, length = 10)
-    private String gender;
+	@NotNull(message = "Gender is required")
+	@Column(nullable = false, length = 10)
+	private String gender;
 
-    @NotBlank(message = "Address must not be blank")
-    @Size(max = 255, message = "Address must not exceed 255 characters")
-    @Column(nullable = false)
-    private String address;
+	@NotBlank(message = "Address must not be blank")
+	@Size(max = 255, message = "Address must not exceed 255 characters")
+	@Column(nullable = false)
+	private String address;
 
-    @NotBlank(message = "Contact info is required")
-    @Pattern(
-        regexp = "^[0-9]{10}$|^[A-Za-z0-9+_.-]+@(.+)$",
-        message = "Contact info must be a valid phone number or email"
-    )
-    @Column(nullable = false, unique = true)
-    private String contactInfo;
+	@NotBlank(message = "Contact info is required")
+	@Pattern(regexp = "^[0-9]{10}$|^[A-Za-z0-9+_.-]+@(.+)$", message = "Contact info must be a valid phone number or email")
+//    @Column(nullable = false, unique = true)
+//    private String contactInfo;
 
-    @NotNull(message = "Status is required")
-    @Column(nullable = false, length = 20)
-    private String status;
+	 private String phone;
+	
+	@Column(nullable = false, unique = true)
+	private String email;
+
+	@NotNull(message = "Status is required")
+	@Column(nullable = false, length = 20)
+	private String status;
 }

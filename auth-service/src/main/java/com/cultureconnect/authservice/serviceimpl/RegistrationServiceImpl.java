@@ -1,6 +1,7 @@
 package com.cultureconnect.authservice.serviceimpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -53,5 +54,17 @@ public class RegistrationServiceImpl implements RegistrationService {
 		
 		return userDTO2;
 	}
+	
+	@Override
+	public String deleteUserByAdmin(Long userId) {
+		
+		User user = registrationRepo.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+		if(user.getRole().equals(Role.ADMIN)) {
+			throw new UsernameNotFoundException("ADMIN Cannot be deleted");
+		}
+		registrationRepo.delete(user);
+		return "Deleted data successfully";
+	}
+
 
 }

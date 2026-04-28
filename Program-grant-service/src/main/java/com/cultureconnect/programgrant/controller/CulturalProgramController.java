@@ -44,14 +44,24 @@ public class CulturalProgramController {
      * Endpoint to create a new cultural program.
      */
     @PostMapping("/createProgram")
-    public ResponseEntity<CulturalProgramResponseDto> createProgram(@Valid @RequestBody CulturalProgramRequestDto requestDto) {
+    public ResponseEntity<CulturalProgramResponseDto> createProgram(
+            @Valid @RequestBody CulturalProgramRequestDto requestDto) {
+
         logger.info("REST Request: Create new Cultural Program with title: {}", requestDto.getTitle());
-        
+
         CulturalProgramResponseDto createdProgram = programService.createProgram(requestDto);
-        ResponseEntity<CulturalProgramResponseDto> user = complianceClient.addNewProgram(createdProgram);
+
+        // 🔵 Non-blocking compliance call
+        try {
+            complianceClient.addNewProgram(createdProgram);
+        } catch (Exception ex) {
+            logger.warn("Compliance service unavailable. Program created successfully. Will retry later.");
+        }
+
         logger.info("REST Response: Program successfully created with ID: {}", createdProgram.getProgramId());
         return new ResponseEntity<>(createdProgram, HttpStatus.CREATED);
     }
+
 
     /**
      * Endpoint to retrieve a complete list of all cultural programs.

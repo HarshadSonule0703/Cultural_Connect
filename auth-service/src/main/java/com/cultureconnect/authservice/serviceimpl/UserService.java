@@ -1,18 +1,31 @@
 package com.cultureconnect.authservice.serviceimpl;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.cultureconnect.authservice.dto.UserReqDTO;
+import com.cultureconnect.authservice.enums.Role;
 import com.cultureconnect.authservice.model.User;
 import com.cultureconnect.authservice.repository.RegistrationLoginRepo;
+import com.cultureconnect.authservice.repository.UserRepo;
 
 @Service
 public class UserService {
 
 	@Autowired
 	private RegistrationLoginRepo loginRepo;
+	
+	@Autowired
+	private UserRepo repo;
+
+	private final RegistrationLoginRepo userRepository;
+
+	public UserService(RegistrationLoginRepo userRepository) {
+		this.userRepository = userRepository;
+	}
 
 	/**
 	 * INTERNAL SERVICE METHOD This method must ONLY fetch user data. DO NOT apply
@@ -35,4 +48,28 @@ public class UserService {
 
 		return reqDTO;
 	}
+
+	public void deactivateUser(String email) {
+
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		user.setStatus("INACTIVE");
+		userRepository.save(user);
+	}
+	
+	public List<UserReqDTO> getUsersByRole(Role role) {
+
+	    List<User> users = repo.findByRole(role);
+
+	    return users.stream().map(user -> {
+	        UserReqDTO dto = new UserReqDTO();
+	        dto.setUserId(user.getUserId());
+	        dto.setName(user.getName());
+	        dto.setEmail(user.getEmail());
+	        dto.setRole(user.getRole());
+	        dto.setPhone(user.getPhone());
+	        return dto;
+	    }).toList();
+	}
+
 }
