@@ -34,7 +34,7 @@ public class User {
 	private String name;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(nullable = false,length = 30)
 	private Role role;
 
     @NotBlank(message = "Email is mandatory")

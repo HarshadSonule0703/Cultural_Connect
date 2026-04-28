@@ -1,5 +1,7 @@
 package com.cultureconnect.authservice.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -115,4 +118,29 @@ public class AuthController {
 	public ResponseEntity<String> forgotPassword(@RequestBody ForgetPasswordDto dto) {
 		return new ResponseEntity<>(forgetPasswordService.resetPassword(dto), HttpStatus.CREATED);
 	}
+
+	 private final UserService userService;
+
+	    public AuthController(UserService userService) {
+	        this.userService = userService;
+	    }
+
+	    @PutMapping("/deactivateUser/{email}")
+	    public ResponseEntity<String> deactivateUser(@PathVariable String email) {
+
+	        userService.deactivateUser(email);
+	        return ResponseEntity.ok("User deactivated successfully");
+	    }
+
+	    @DeleteMapping("/deleteUserByAdmin/{userId}")
+		public ResponseEntity<String> deleteUserByAdmin(@PathVariable Long userId) {
+			String deletedUser = registrationService.deleteUserByAdmin(userId);
+			return new ResponseEntity<>(deletedUser, HttpStatus.NO_CONTENT);
+		}
+		
+		@GetMapping("/getUserByRole/{role}")
+		public List<UserReqDTO> getUserByRole(@PathVariable Role role) {
+		    return service.getUsersByRole(role);
+		}
+	    
 }
