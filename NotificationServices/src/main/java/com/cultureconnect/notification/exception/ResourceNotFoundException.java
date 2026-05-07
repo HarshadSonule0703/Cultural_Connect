@@ -3,10 +3,15 @@ package com.cultureconnect.notification.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-//This tells Spring to return 404 when this exception is thrown
-@ResponseStatus(HttpStatus.NOT_FOUND)
+/**
+ * Exception thrown when a specific HealthGov resource cannot be found.
+ */
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
 public class ResourceNotFoundException extends RuntimeException {
- public ResourceNotFoundException(String message) {
-     super(message);
- }
+
+    private static final long serialVersionUID = 1L;
+
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
 }

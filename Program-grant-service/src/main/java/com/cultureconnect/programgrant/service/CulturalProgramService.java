@@ -3,6 +3,7 @@ package com.cultureconnect.programgrant.service;
 import java.util.List;
 
 import com.cultureconnect.programgrant.dto.CulturalProgramRequestDto;
+import com.cultureconnect.programgrant.dto.CulturalProgramResponseCitizenDto;
 import com.cultureconnect.programgrant.dto.CulturalProgramResponseDto;
 
 public interface CulturalProgramService {
@@ -15,4 +16,6 @@ public interface CulturalProgramService {
 	CulturalProgramResponseDto updateProgram(Long id, CulturalProgramRequestDto requestDto);
 
 	void deleteProgram(Long id);
+	
+	List<CulturalProgramResponseCitizenDto> getAllProgramsForCitizen();
 }

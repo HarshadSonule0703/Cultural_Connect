@@ -1,79 +1,52 @@
 package com.cultureconnect.notification.exception;
 
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import com.cultureconnect.notification.util.ApiResponse;
-
-import jakarta.persistence.EntityNotFoundException;
-import lombok.extern.slf4j.Slf4j;
-
-/**
- * Centralized exception handling across all @RestController classes.
- * This class captures exceptions and wraps them in a consistent ApiResponse format.
- */
-@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Handles 404 Not Found scenarios.
-     * Intercepts our custom ResourceNotFoundException and standard JPA EntityNotFoundException.
-     */
-    @ExceptionHandler({ResourceNotFoundException.class, EntityNotFoundException.class})
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(RuntimeException e) {
-        log.error("Resource not found: {}", e.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(e.getMessage()));
+    // 1️⃣ Handles Not Found / Business rule violations
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        body.put("module", "HEALTH_GOVERNANCE_SYSTEM");
+        body.put("status", HttpStatus.NOT_FOUND.value());
+
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
-    /**
-     * Handles Bean Validation failures (triggered by @Valid in Controllers).
-     * Extracts all validation messages (e.g., "Email is required") and returns them as a single string.
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationErrors(MethodArgumentNotValidException e) {
-        String errors = e.getBindingResult().getFieldErrors()
-                .stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-        
-        log.warn("Validation failed: {}", errors);
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Validation Error: " + errors));
+    // 2️⃣ Handles bad input / enum conversion / validation issues
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", "Validation Error: " + ex.getMessage());
+        body.put("module", "HEALTH_GOVERNANCE_SYSTEM");
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
-    /**
-     * Handles invalid inputs, specifically Enum mismatches or data type errors.
-     * Example: Passing "DASHBOARD" instead of "PROGRAM" for a ReportScope.
-     */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
-        String detail = String.format("The value '%s' is invalid for parameter '%s'.", 
-                                      e.getValue(), e.getName());
-        log.warn("Parameter type mismatch: {}", detail);
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(detail));
-    }
-
-    /**
-     * Catch-all for any other unexpected server errors.
-     * Logs the stack trace for developers but shows a generic message to the user for security.
-     */
+    // 3️⃣ Catch‑all for unexpected errors
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception e) {
-        log.error("CRITICAL SYSTEM ERROR: ", e); 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An unexpected error occurred. Please contact support."));
+    public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", "An unexpected error occurred: " + ex.getMessage());
+        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

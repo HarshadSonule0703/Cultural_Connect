@@ -1,20 +1,14 @@
 package com.cultureconnect.notification.dto;
-
-import java.time.LocalDateTime;
-
 import com.cultureconnect.notification.enums.NotificationCategory;
 
 import lombok.Data;
 
 @Data
-public class NotificationDTO {
+public class CreateNotificationRequest {
 
-    private Long notificationId;
     private Long userId;
+    private String mail;
     private Long entityId;
-    private String message;
-    private String email;
     private NotificationCategory category;
-    private String status;
-    private LocalDateTime createdDate;
+    private String message;
 }

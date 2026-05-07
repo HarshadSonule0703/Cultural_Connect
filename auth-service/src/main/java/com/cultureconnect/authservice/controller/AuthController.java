@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cultureconnect.authservice.config.JwtTokenUtil;
@@ -112,6 +113,11 @@ public class AuthController {
 	public UserReqDTO getUserById(@PathVariable Long userId) {
 		UserReqDTO userDto = service.getUserDetailsById(userId);
 		return userDto;
+	}
+
+	@PostMapping("/forgotPassword/otp")
+	public ResponseEntity<String> generateOtp(@RequestParam String email) {
+		return ResponseEntity.ok(forgetPasswordService.generateOtp(email));
 	}
 
 	@PutMapping("/forgotPassword")
