@@ -49,8 +49,7 @@ public class Citizen {
 
 	@NotBlank(message = "Contact info is required")
 	@Pattern(regexp = "^[0-9]{10}$|^[A-Za-z0-9+_.-]+@(.+)$", message = "Contact info must be a valid phone number or email")
-//    @Column(nullable = false, unique = true)
-//    private String contactInfo;
+
 
 	 private String phone;
 	
