@@ -40,6 +40,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 		}else {
 			user.setStatus(userDto.getStatus());
 		}
+		System.out.println(userDto.getPassword());
 		user.setPassword(bcryptEncoder.encode(userDto.getPassword()));
 		
 		registrationRepo.save(user);

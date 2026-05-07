@@ -40,7 +40,7 @@ public class CitizenServiceImpl implements CitizenService {
 		userRequest.setName(dto.getName());
 		userRequest.setEmail(dto.getEmail()); // using email/phone
 		userRequest.setPhone(dto.getPhone());
-		userRequest.setPassword("Citizen@123"); // default (can improve later)
+		userRequest.setPassword(dto.getPassword()); // default (can improve later)
 		userRequest.setRole("CITIZEN");
 
 		try {
