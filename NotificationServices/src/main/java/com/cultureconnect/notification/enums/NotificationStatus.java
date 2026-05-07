@@ -1,5 +1,6 @@
 package com.cultureconnect.notification.enums;
 
+
 public enum NotificationStatus {
-	   PENDING, SENT, READ
-	}
+	PENDING, SENT, FAILED, READ
+}

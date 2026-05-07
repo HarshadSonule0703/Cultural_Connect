@@ -2,10 +2,20 @@ package com.example.demo.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.client.ProgramClient;
 import com.example.demo.dto.CitizenDTO;
 import com.example.demo.dto.CitizenDocumentDTO;
+import com.example.demo.dto.CulturalProgramResponseCitizenDto;
 import com.example.demo.entity.Citizen;
 import com.example.demo.entity.CitizenDocument;
 import com.example.demo.service.CitizenService;
@@ -18,9 +28,12 @@ public class CitizenController {
 
 	private final CitizenService service;
 
-	public CitizenController(CitizenService service) {
-		this.service = service;
-	}
+	private final ProgramClient programClientService;
+	 
+	public CitizenController(CitizenService service, ProgramClient programClientService) {
+			this.service = service;
+			this.programClientService=programClientService;
+		}
 
 	@PostMapping("/register")
 	public Citizen register(@Valid @RequestBody CitizenDTO dto) {
@@ -64,5 +77,11 @@ public class CitizenController {
 		service.deleteDocument(docId);
 		return "Document deleted successfully";
 	}
+	@GetMapping("/getAllCitizenProgram")
+	public ResponseEntity<List<CulturalProgramResponseCitizenDto>> getAllCitizenProgram() {
+		return programClientService.getAllProgramsForCitizen();
+	}
+	
+	 
 
 }

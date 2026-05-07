@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cultureconnect.programgrant.dto.CulturalProgramRequestDto;
+import com.cultureconnect.programgrant.dto.CulturalProgramResponseCitizenDto;
 import com.cultureconnect.programgrant.dto.CulturalProgramResponseDto;
 import com.cultureconnect.programgrant.feign.ComplianceClient;
 import com.cultureconnect.programgrant.service.CulturalProgramService;
@@ -73,6 +74,17 @@ public class CulturalProgramController {
         logger.info("REST Request: Fetching all cultural programs.");
         
         List<CulturalProgramResponseDto> programs = programService.getAllPrograms();
+        
+        logger.info("REST Response: Returning {} programs.", programs.size());
+        return ResponseEntity.ok(programs);
+    }
+    
+    
+    @GetMapping("/getAllProgramForCitizen")
+    public ResponseEntity<List<CulturalProgramResponseCitizenDto>> getAllProgramsForCitizen() {
+        logger.info("REST Request: Fetching all cultural programs.");
+        
+        List<CulturalProgramResponseCitizenDto> programs = programService.getAllProgramsForCitizen();
         
         logger.info("REST Response: Returning {} programs.", programs.size());
         return ResponseEntity.ok(programs);

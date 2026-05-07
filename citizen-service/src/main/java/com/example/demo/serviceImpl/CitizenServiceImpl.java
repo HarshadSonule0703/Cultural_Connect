@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.demo.dto.CitizenDTO;
 import com.example.demo.dto.CitizenDocumentDTO;
+import com.example.demo.dto.UniversalNotificationRequest;
 import com.example.demo.dto.UserRegisterRequestDTO;
 import com.example.demo.entity.Citizen;
 import com.example.demo.entity.CitizenDocument;
@@ -60,9 +61,55 @@ public class CitizenServiceImpl implements CitizenService {
 		c.setEmail(dto.getEmail());
 
 		c.setStatus("ACTIVE");
+		
+		Citizen savedCitizen = repository.save(c);
+		
 
-		return repository.save(c);
+		// ✅ 3. SEND REGISTRATION SUCCESS EMAIL (BEST-EFFORT)
+		    try {
+		        UniversalNotificationRequest notification = new UniversalNotificationRequest();
+		        notification.setUserId(savedCitizen.getCitizenId());
+		        notification.setEmail(savedCitizen.getEmail());
+		        notification.setCategory("GENERAL");
+		        notification.setEntityId(savedCitizen.getCitizenId());
+		        notification.setMessage(
+		            "✅ Welcome to CultureConnect!\n\n" +
+		            "Dear " + savedCitizen.getName() + ",\n\n" +
+		            "Your registration was successful. You can now log in and explore programs, " +
+		            "apply for grants, and manage your profile.\n\n" +
+		            "Regards,\nCultureConnect Team"
+		        );
+
+		        webClient.post()
+		                .uri("http://localhost:8085/api/notifications/send-universal")
+		                .bodyValue(notification)
+		                .retrieve()
+		                .bodyToMono(Void.class)
+		                .block();
+
+		    } catch (Exception ex) {
+		        // 🔥 VERY IMPORTANT: Do NOT break registration
+		    	ex.printStackTrace();
+		        System.out.println("⚠ Registration mail failed, but user created successfully");
+		    }
+
+
+		return savedCitizen;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	// ✅ GET BY ID
 	@Override

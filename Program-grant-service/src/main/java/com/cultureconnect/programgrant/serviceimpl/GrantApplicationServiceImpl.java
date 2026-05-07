@@ -7,9 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.cultureconnect.programgrant.client.NotificationClient;
 import com.cultureconnect.programgrant.dto.GrantApplicationRequestDto;
 import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
 import com.cultureconnect.programgrant.dto.GrantApprovalDto;
+import com.cultureconnect.programgrant.dto.UniversalNotificationRequest;
 import com.cultureconnect.programgrant.entity.CulturalProgram;
 import com.cultureconnect.programgrant.entity.GrantApplication;
 import com.cultureconnect.programgrant.enums.Status;
@@ -34,6 +36,7 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
     private final CulturalProgramRepository programRepository;
     private final GrantService grantService;
 
+    private final NotificationClient notificationClient;
     /**
      * Submit a new grant application.
      */
@@ -43,7 +46,7 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
             GrantApplicationRequestDto dto) {
 
         // ✅ Validate citizen via Feign
-        citizenClient.getCitizenById(dto.getCitizenId());
+        var citizen = citizenClient.getCitizenById(dto.getCitizenId());
 
         // ✅ Validate program
         CulturalProgram program = programRepository.findById(dto.getProgramId())
@@ -57,6 +60,25 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
         application.setStatus(Status.PENDING);
 
         applicationRepository.save(application);
+
+
+try {
+        UniversalNotificationRequest notification = new UniversalNotificationRequest();
+        notification.setUserId(application.getCitizenId());
+        notification.setEmail(citizen.getEmail());
+        notification.setCategory("GRANT");
+        notification.setEntityId(application.getApplicationId());
+        notification.setMessage(
+                "✅ Your grant application for program '" +
+                program.getName() +
+                "' has been submitted successfully."
+        );
+
+        notificationClient.sendUniversalNotification	(notification);
+    } catch (Exception ex) {
+        logger.warn("Notification service unavailable. Application submitted anyway.");
+    }
+
 
         return mapToResponseDto(application, program.getName());
     }
@@ -98,6 +120,31 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
 
         app.setStatus(approvalDto.getStatus());
         applicationRepository.save(app);
+        
+
+     // ✅ Fetch citizen details for email
+         var citizen = citizenClient.getCitizenById(app.getCitizenId());
+
+         // 🔔 SEND NOTIFICATION (Approved / Rejected)
+         try {
+             UniversalNotificationRequest notification = new UniversalNotificationRequest();
+             notification.setUserId(app.getCitizenId());
+             notification.setEmail(citizen.getEmail());
+             notification.setCategory("GRANT");
+             notification.setEntityId(app.getApplicationId());
+
+             String message =
+                     approvalDto.getStatus() == Status.APPROVED
+                             ? "🎉 Congratulations! Your grant application has been APPROVED."
+                             : "❌ We regret to inform you that your grant application has been REJECTED.";
+
+             notification.setMessage(message);
+
+             notificationClient.sendUniversalNotification(notification);
+         } catch (Exception ex) {
+             logger.warn("Failed to send application status notification");
+         }
+
 
         return mapToResponseDto(app);
     }

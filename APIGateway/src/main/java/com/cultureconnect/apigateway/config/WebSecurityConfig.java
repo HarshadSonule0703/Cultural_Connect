@@ -32,6 +32,7 @@ public class WebSecurityConfig {
                     "/cultureconnect/login",
                     "/cultureconnect/citizenRegister",
                     "/cultureconnect/forgotPassword",
+                    "/cultureconnect/forgotPassword/otp",
                     "/api/citizens/register"
                 ).permitAll()
                 .pathMatchers("/cultureconnect/getUserById/{userId}",
@@ -54,7 +55,7 @@ public class WebSecurityConfig {
                              .hasAnyRole("MANAGER", "ADMIN")
 
                              .pathMatchers("/api/applications/**")
-                             .hasAnyRole("CITIZEN", "OFFICER", "ADMIN","MANAGER	")
+                             .hasAnyRole("CITIZEN", "OFFICER", "ADMIN","MANAGER")
 
                              // ✅ COMPLIANCE
                              .pathMatchers("/compliance/**")

@@ -3,8 +3,8 @@ package com.cultureconnect.notification.dto;
 import lombok.Data;
 
 @Data
-public class UserReqDTO {
-    private Long userId;
+public class OtpRequestDTO {
+
     private String email;
-    private String name;
+    private String otp;
 }

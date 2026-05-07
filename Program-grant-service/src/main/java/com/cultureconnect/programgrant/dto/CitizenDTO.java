@@ -20,5 +20,5 @@ public class CitizenDTO {
 
     private String address;
 
-    private String contactInfo;
+    private String email;
 }
