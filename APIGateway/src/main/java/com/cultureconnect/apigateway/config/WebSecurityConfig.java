@@ -7,6 +7,8 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+import io.netty.handler.codec.http.HttpMethod;
+
 @Configuration
 @EnableWebFluxSecurity
 public class WebSecurityConfig {
@@ -17,17 +19,22 @@ public class WebSecurityConfig {
             JwtValidationWebFilter jwtValidationWebFilter) {
 
         return http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .cors(ServerHttpSecurity.CorsSpec::disable)
-            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-
+//            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+//            .cors(cors -> {})
+//            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+//            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+        		 .cors(cors -> {})  // ✅ ADD THIS LINE
+        		.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+        		 
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+     
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
             // ✅ JWT validation filter
             .addFilterAt(jwtValidationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
 
             .authorizeExchange(ex -> ex
-
-                // 1️⃣ PUBLIC AUTH ENDPOINTS
+            		.pathMatchers(HttpMethod.OPTIONS,"/**").permitAll()
+//                // 1️⃣ PUBLIC AUTH ENDPOINTS
                 .pathMatchers(
                     "/cultureconnect/login",
                     "/cultureconnect/citizenRegister",
@@ -74,8 +81,9 @@ public class WebSecurityConfig {
                              .hasAnyRole("MANAGER","ADMIN","AUDITOR")
 
 
-                // 🔒 Everything else secured
+//                // 🔒 Everything else secured
                 .anyExchange().authenticated()
+//            		.anyExchange().permitAll()
             )
             .build();
     }

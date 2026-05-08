@@ -6,27 +6,56 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
+//@Configuration
+//public class CorsConfig {
+//	@Bean
+//	public CorsWebFilter corsWebFilter() {
+//
+//		CorsConfiguration config = new CorsConfiguration();
+//
+//		config.addAllowedOriginPattern("*");
+//		config.addAllowedOrigin("http://localhost:5173");
+//		
+//
+//		config.addAllowedHeader("*");
+//
+//		config.addAllowedMethod("*");
+//
+//		config.setAllowCredentials(true);
+//
+//		
+//		config.addExposedHeader("Authorization");
+//		
+//		UrlBasedCorsConfigurationSource source =
+//
+//				new UrlBasedCorsConfigurationSource();
+//
+//		source.registerCorsConfiguration("/**", config);
+//
+//		return new CorsWebFilter(source);
+//
+//	}
+//	
+//
+//}
 @Configuration
+
 public class CorsConfig {
 	@Bean
-	public CorsWebFilter corsWebFilter() {
 
+	public CorsWebFilter corsWebFilter() {
 		CorsConfiguration config = new CorsConfiguration();
 
-		config.addAllowedOrigin("*");
-
+		config.addAllowedOrigin("http://localhost:5173"); // ✅ IMPORTANT
 		config.addAllowedHeader("*");
-
 		config.addAllowedMethod("*");
 
-		config.setAllowCredentials(false);
-
+		config.setAllowCredentials(true);
 		UrlBasedCorsConfigurationSource source =
 
 				new UrlBasedCorsConfigurationSource();
 
 		source.registerCorsConfiguration("/**", config);
-
 		return new CorsWebFilter(source);
 
 	}
