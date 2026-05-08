@@ -95,8 +95,6 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
-import io.netty.handler.codec.http.HttpMethod;
-
 @Configuration
 @EnableWebFluxSecurity
 public class WebSecurityConfig {
@@ -107,24 +105,6 @@ public class WebSecurityConfig {
             JwtValidationWebFilter jwtValidationWebFilter) {
 
         return http
-<<<<<<< HEAD
-//            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//            .cors(cors -> {})
-//            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-//            .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-        		 .cors(cors -> {})  // ✅ ADD THIS LINE
-        		.httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-        		 
-                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-     
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            // ✅ JWT validation filter
-            .addFilterAt(jwtValidationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-
-            .authorizeExchange(ex -> ex
-            		.pathMatchers(HttpMethod.OPTIONS,"/**").permitAll()
-//                // 1️⃣ PUBLIC AUTH ENDPOINTS
-=======
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
 
             // ✅ ENABLE CORS (REQUIRED)
@@ -137,7 +117,6 @@ public class WebSecurityConfig {
                 // ✅ MUST BE FIRST
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
->>>>>>> ef4c34f3cd0654b5475b10f5804f7a5612221bfd
                 .pathMatchers(
                     "/cultureconnect/login",
                     "/cultureconnect/citizenRegister",
@@ -152,36 +131,7 @@ public class WebSecurityConfig {
                 .pathMatchers("/api/programs/**")
                 .hasAnyRole("MANAGER","ADMIN")
 
-<<<<<<< HEAD
-                             // ✅ PROGRAMS & GRANTS
-                             .pathMatchers("/api/programs/**")
-                             .hasAnyRole("MANAGER", "ADMIN")
-
-                             .pathMatchers("/api/applications/**")
-                             .hasAnyRole("CITIZEN", "OFFICER", "ADMIN","MANAGER")
-
-                             // ✅ COMPLIANCE
-                             .pathMatchers("/compliance/**")
-                             .hasAnyRole("COMPLIANCE","ADMIN")
-
-                             // ✅ EVENTS & RESOURCES
-                             .pathMatchers("/api/events/**", "/api/resources/**")
-                             .hasAnyRole("OFFICER","ADMIN","MANAGER")
-
-                             // ✅ HERITAGE
-                             .pathMatchers("/api/heritage-sites/**", "/api/activities/**")
-                             .hasAnyRole("OFFICER","ADMIN","MANAGER")
-
-                             // ✅ REPORTS
-                             .pathMatchers("/api/reports/**")
-                             .hasAnyRole("MANAGER","ADMIN","AUDITOR")
-
-
-//                // 🔒 Everything else secured
-=======
->>>>>>> ef4c34f3cd0654b5475b10f5804f7a5612221bfd
                 .anyExchange().authenticated()
-//            		.anyExchange().permitAll()
             )
 
             // ✅ JWT AFTER CORS
