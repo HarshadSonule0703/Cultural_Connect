@@ -29,6 +29,10 @@ public class CitizenDTO {
 
 	@Email(message = "Invalid email")
 	private String email;
+	
+	@NotBlank(message = "password is required")
+	private String password;
+
 
 	@Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
 	private String phone;
