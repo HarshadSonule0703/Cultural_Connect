@@ -24,6 +24,7 @@ import com.cultureconnect.authservice.dto.ForgetPasswordDto;
 import com.cultureconnect.authservice.dto.JwtResponse;
 import com.cultureconnect.authservice.dto.LoginDTO;
 import com.cultureconnect.authservice.dto.UserDTO;
+import com.cultureconnect.authservice.dto.UserRegisterRequestDTO;
 import com.cultureconnect.authservice.dto.UserReqDTO;
 import com.cultureconnect.authservice.enums.Role;
 import com.cultureconnect.authservice.exception.AuthenticationFailedException;
@@ -31,6 +32,7 @@ import com.cultureconnect.authservice.model.User;
 import com.cultureconnect.authservice.service.AuditLogService;
 import com.cultureconnect.authservice.service.ForgetPasswordService;
 import com.cultureconnect.authservice.service.RegistrationService;
+import com.cultureconnect.authservice.service.UpdateUserService;
 import com.cultureconnect.authservice.serviceimpl.LoginServiceImpl;
 import com.cultureconnect.authservice.serviceimpl.UserService;
 
@@ -127,8 +129,9 @@ public class AuthController {
 
 	 private final UserService userService;
 
-	    public AuthController(UserService userService) {
+	    public AuthController(UserService userService,UpdateUserService updateUserService) {
 	        this.userService = userService;
+	        this.updateUserService = updateUserService;
 	    }
 
 	    @PutMapping("/deactivateUser/{email}")
@@ -149,4 +152,12 @@ public class AuthController {
 		    return service.getUsersByRole(role);
 		}
 	    
+		private final UpdateUserService updateUserService;
+		@PutMapping("/updateUser")
+		public ResponseEntity<?> updateUser(@RequestBody UserRegisterRequestDTO dto) {
+//		    .updateUser(dto);
+			updateUserService.updateUser(dto);
+		    return ResponseEntity.ok("User updated");
+		}
+
 }
