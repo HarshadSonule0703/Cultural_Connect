@@ -22,56 +22,77 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtTokenUtil implements Serializable {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
+    public static final long JWT_TOKEN_VALIDITY = 8 * 60 * 60; // seconds
 
-	public static final long JWT_TOKEN_VALIDITY = 8 * 60 * 60;
+    @Value("${jwt.secret}")
+    private String secret;
 
-	@Value("${jwt.secret}")
-	private String secret;
+    /* ================= TOKEN GENERATION ================= */
 
-	public String getUsernameFromToken(String token) {
-		return getClaimFromToken(token, Claims::getSubject);
-	}
+    public String generateToken(UserDetails userDetails, Role role, Long userId) {
 
-	// retrieve expiration date from jwt token
-	public Date getExpirationDateFromToken(String token) {
-		return getClaimFromToken(token, Claims::getExpiration);
-	}
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role.name());
+        claims.put("userId", userId); // ✅ FIX: ADD USER ID
 
-	public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
-		final Claims claims = getAllClaimsFromToken(token);
-		return claimsResolver.apply(claims);
-	}
+        return doGenerateToken(claims, userDetails.getUsername());
+    }
 
-	// for retrieveing any information from token we will need the secret key
-	public Claims getAllClaimsFromToken(String token) {
-		return Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(secret.getBytes())).build().parseClaimsJws(token)
-				.getBody();
-	}
+    private String doGenerateToken(Map<String, Object> claims, String subject) {
 
-	private Boolean isTokenExpired(String token) {
-		final Date expiration = getExpirationDateFromToken(token);
-		return expiration.before(new Date());
-	}
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000)
+                )
+                .signWith(
+                        Keys.hmacShaKeyFor(secret.getBytes()),
+                        SignatureAlgorithm.HS512
+                )
+                .compact();
+    }
 
-	public String generateToken(UserDetails userDetails, Role role) {
-		Map<String, Object> claims = new HashMap<>();
-		claims.put("role", role.name());
-		return doGenerateToken(claims, userDetails.getUsername());
-	}
+    /* ================= TOKEN READING ================= */
 
-	private String doGenerateToken(Map<String, Object> claims, String subject) {
+    public String getUsernameFromToken(String token) {
+        return getClaimFromToken(token, Claims::getSubject);
+    }
 
-		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-				.setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
-				.signWith(Keys.hmacShaKeyFor(secret.getBytes()), SignatureAlgorithm.HS512).compact();
-	}
+    public Date getExpirationDateFromToken(String token) {
+        return getClaimFromToken(token, Claims::getExpiration);
+    }
 
-	public Boolean validateToken(String token, UserDetails userDetails) {
-		final String username = getUsernameFromToken(token);
-		return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-	}
+    public Long getUserIdFromToken(String token) {
+        return getAllClaimsFromToken(token).get("userId", Long.class);
+    }
+
+    public String getRoleFromToken(String token) {
+        return getAllClaimsFromToken(token).get("role", String.class);
+    }
+
+    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
+        Claims claims = getAllClaimsFromToken(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public Claims getAllClaimsFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes()))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    private Boolean isTokenExpired(String token) {
+        Date expiration = getExpirationDateFromToken(token);
+        return expiration.before(new Date());
+    }
+
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        String username = getUsernameFromToken(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    }
 }

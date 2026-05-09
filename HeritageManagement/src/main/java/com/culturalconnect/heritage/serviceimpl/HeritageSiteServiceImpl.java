@@ -29,10 +29,12 @@ public class HeritageSiteServiceImpl implements HeritageSiteService {
         logger.info("Creating heritage site with name: {}", dto.getName());
 
         HeritageSite site = new HeritageSite();
+        site.setSiteId(dto.getSiteId());
         site.setName(dto.getName());
         site.setLocation(dto.getLocation());
         site.setDescription(dto.getDescription());
         site.setStatus(dto.getStatus());
+        site.setFileUri(dto.getFileUri());
 
         HeritageSite savedSite = repository.save(site);
         logger.info("Heritage site created with id: {}", savedSite.getSiteId());
