@@ -1,9 +1,13 @@
 package com.culturalconnect.heritage.dto;
 
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
  
 public class HeritageSiteDTO {
+	
+	@NotBlank
+	private String siteId;
  
     @NotBlank
     private String name;
@@ -16,11 +20,30 @@ public class HeritageSiteDTO {
  
     @NotBlank
     private String status;
+    
+//    @NotBlank
+    private String fileUri;
  
     public HeritageSiteDTO() {}
+    
+    public String getFileUri() {
+        return fileUri;
+    }
+    
+    public void setFileUri(String fileUri) {
+        this.fileUri = fileUri;
+    }
  
     public String getName() {
         return name;
+    }
+    
+    public void setSiteId(String siteId) {
+        this.siteId = siteId;
+    }
+ 
+    public String getSiteId() {
+        return siteId;
     }
  
     public void setName(String name) {
@@ -50,5 +73,7 @@ public class HeritageSiteDTO {
     public void setStatus(String status) {
         this.status = status;
     }
+    
+    
 }
  

@@ -76,29 +76,44 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<?> createAuthenticationToken(@RequestBody LoginDTO loginDto) {
-		log.info("Inside Login method {}", loginDto);
 
-		authenticate(loginDto.getEmail(), loginDto.getPassword());
+	    log.info("Inside Login method {}", loginDto);
 
-		log.info("After authentication");
-		final UserDetails userDetails = loginServiceImpl.loadUserByUsername(loginDto.getEmail());
-		log.info("After userdetails");
-		String role = userDetails.getAuthorities().stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("Role not found")).getAuthority().replace("ROLE_", "");
+	    authenticate(loginDto.getEmail(), loginDto.getPassword());
 
-		final String token = jwtTokenUtil.generateToken(userDetails, Role.valueOf(role));
+	    log.info("After authentication");
 
-		log.info("After token generated");
+	    final UserDetails userDetails =
+	            loginServiceImpl.loadUserByUsername(loginDto.getEmail());
 
-		User user = loginServiceImpl.getUserByEmail(loginDto.getEmail());
+	    log.info("After userdetails");
 
-		try {
-			auditLogService.createAuditLog(user, "LOGIN", "AUTH");
-		} catch (Exception e) {
-			log.error("Audit logging failed", e); // ✅ login still succeeds
-		}
+	    String role = userDetails.getAuthorities()
+	            .stream()
+	            .findFirst()
+	            .orElseThrow(() -> new RuntimeException("Role not found"))
+	            .getAuthority()
+	            .replace("ROLE_", "");
 
-		return ResponseEntity.ok(new JwtResponse(token));
+	    // ✅ FETCH USER TO GET USER ID
+	    User user = loginServiceImpl.getUserByEmail(loginDto.getEmail());
+
+	    // ✅ GENERATE TOKEN WITH USER ID INCLUDED
+	    final String token = jwtTokenUtil.generateToken(
+	            userDetails,
+	            Role.valueOf(role),
+	            user.getUserId()     // ✅ THIS IS THE KEY CHANGE
+	    );
+
+	    log.info("After token generated with userId");
+
+	    try {
+	        auditLogService.createAuditLog(user, "LOGIN", "AUTH");
+	    } catch (Exception e) {
+	        log.error("Audit logging failed", e);
+	    }
+
+	    return ResponseEntity.ok(new JwtResponse(token));
 	}
 
 	private void authenticate(String email, String password) {

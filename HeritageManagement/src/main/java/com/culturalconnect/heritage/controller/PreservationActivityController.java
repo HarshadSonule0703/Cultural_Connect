@@ -32,7 +32,7 @@
 	        return service.addActivity(dto);
 	    }
 	
-	    @GetMapping("/site/{siteId}")
+	    @GetMapping("/getActivitiesBySite/{siteId}")
 	    public List<PreservationActivity> getActivitiesBySite(@PathVariable Long siteId) {
 	        logger.info("Received request to fetch activities for siteId: {}", siteId);
 	        return service.getActivitiesBySite(siteId);
