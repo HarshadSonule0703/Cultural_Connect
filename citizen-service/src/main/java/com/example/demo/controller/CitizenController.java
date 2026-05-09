@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 //import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,6 +18,7 @@ import com.example.demo.client.ProgramClient;
 import com.example.demo.dto.CitizenDTO;
 import com.example.demo.dto.CitizenDocumentDTO;
 import com.example.demo.dto.CulturalProgramResponseCitizenDto;
+import com.example.demo.dto.UpdateCitizenStatusDto;
 import com.example.demo.entity.Citizen;
 import com.example.demo.entity.CitizenDocument;
 import com.example.demo.service.CitizenService;
@@ -84,6 +86,15 @@ public class CitizenController {
 		return programClientService.getAllProgramsForCitizen();
 	}
 	
-	 
+	@PatchMapping("/{citizenId}/status")
+	public ResponseEntity<String> updateCitizenStatus(
+	        @PathVariable Long citizenId,
+	        @RequestBody UpdateCitizenStatusDto dto) {
+
+	    service.updateStatus(citizenId, dto);
+
+	    return ResponseEntity.ok("Citizen Status Updated Successfully");
+	}
+	  
 
 }
