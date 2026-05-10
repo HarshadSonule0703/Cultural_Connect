@@ -54,13 +54,13 @@ public class PreservationActivityServiceImpl implements PreservationActivityServ
     }
  
     @Override
-    public List<PreservationActivity> getActivitiesBySite(Long siteId) {
+    public List<PreservationActivity> getActivitiesBySite(String siteId) {
         logger.info("Fetching preservation activities for siteId: {}", siteId);
         return activityRepository.findBySiteId(siteId);
     }
  
     @Override
-    public PreservationActivity getActivityBySiteAndId(Long siteId, Long activityId) {
+    public PreservationActivity getActivityBySiteAndId(String siteId, Long activityId) {
         logger.info(
             "Fetching preservation activity with activityId: {} for siteId: {}",
             activityId, siteId

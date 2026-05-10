@@ -6,7 +6,7 @@ import java.time.LocalDate;
 public class PreservationActivityDTO {
  
     @NotNull
-    private Long siteId;
+    private String siteId;
  
     @NotNull
     private Long officerId;
@@ -22,11 +22,11 @@ public class PreservationActivityDTO {
  
     public PreservationActivityDTO(){}
  
-    public Long getSiteId() {
+    public String getSiteId() {
         return siteId;
     }
  
-    public void setSiteId(Long siteId) {
+    public void setSiteId(String siteId) {
         this.siteId = siteId;
     }
  

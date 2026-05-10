@@ -43,7 +43,7 @@ public class HeritageSiteController {
 
     @PostMapping("/uploadImage/{siteId}")
     public Map<String, String> uploadImage(
-            @PathVariable Long siteId,
+            @PathVariable String siteId,
             @RequestParam("file") MultipartFile file) throws IOException {
 
         // ✅ Base upload directory (e.g., uploads/1/)
@@ -84,20 +84,20 @@ public class HeritageSiteController {
     }
 
     @GetMapping("/getSitebyId/{id}")
-    public HeritageSite getSite(@PathVariable Long id) {
+    public HeritageSite getSite(@PathVariable String id) {
         logger.info("Received request to fetch heritage site with id: {}", id);
         return service.getSiteById(id);
     }
 
     @PutMapping("/updateSiteDetails/{id}")
-    public HeritageSite updateSite(@PathVariable Long id,
+    public HeritageSite updateSite(@PathVariable String id,
                                    @RequestBody HeritageSiteDTO dto) {
         logger.info("Received request to update heritage site with id: {}", id);
         return service.updateSite(id, dto);
     }
 
     @DeleteMapping("/deleteSite/{id}")
-    public void deleteSite(@PathVariable Long id) {
+    public void deleteSite(@PathVariable String id) {
         logger.info("Received request to delete heritage site with id: {}", id);
         service.deleteSite(id);
     }
