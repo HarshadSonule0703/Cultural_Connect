@@ -4,7 +4,10 @@ import com.culturalconnect.heritage.dto.HeritageSiteDTO;
 import com.culturalconnect.heritage.entity.HeritageSite;
 import com.culturalconnect.heritage.exception.ResourceNotFoundException;
 import com.culturalconnect.heritage.repository.HeritageSiteRepository;
+import com.culturalconnect.heritage.repository.PreservationActivityRepository;
 import com.culturalconnect.heritage.service.HeritageSiteService;
+
+import jakarta.transaction.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +22,11 @@ public class HeritageSiteServiceImpl implements HeritageSiteService {
             LoggerFactory.getLogger(HeritageSiteServiceImpl.class);
 
     private final HeritageSiteRepository repository;
+    private final PreservationActivityRepository preservationActivityRepository;
 
-    public HeritageSiteServiceImpl(HeritageSiteRepository repository) {
+    public HeritageSiteServiceImpl(HeritageSiteRepository repository,PreservationActivityRepository preservationActivityRepository) {
         this.repository = repository;
+        this.preservationActivityRepository=preservationActivityRepository;
     }
 
     @Override
@@ -49,7 +54,7 @@ public class HeritageSiteServiceImpl implements HeritageSiteService {
     }
 
     @Override
-    public HeritageSite getSiteById(Long id) {
+    public HeritageSite getSiteById(String id) {
         logger.info("Fetching heritage site with id: {}", id);
 
         return repository.findById(id)
@@ -60,7 +65,7 @@ public class HeritageSiteServiceImpl implements HeritageSiteService {
     }
 
     @Override
-    public HeritageSite updateSite(Long id, HeritageSiteDTO dto) {
+    public HeritageSite updateSite(String id, HeritageSiteDTO dto) {
         logger.info("Updating heritage site with id: {}", id);
 
         HeritageSite site = getSiteById(id);
@@ -77,12 +82,17 @@ public class HeritageSiteServiceImpl implements HeritageSiteService {
     }
 
     @Override
-    public void deleteSite(Long id) {
-        logger.info("Deleting heritage site with id: {}", id);
+    @Transactional
+    public void deleteSite(String siteId) {
+        logger.info("Deleting heritage site with id: {}", siteId);
 
-        HeritageSite site = getSiteById(id);
+        // ✅ 1. Delete all preservation activities for this site
+        preservationActivityRepository.deleteBySiteId(siteId);
+
+        // ✅ 2. Fetch and delete the heritage site
+        HeritageSite site = getSiteById(siteId);
         repository.delete(site);
 
-        logger.info("Heritage site deleted with id: {}", id);
+        logger.info("Heritage site and its preservation activities deleted for siteId: {}", siteId);
     }
 }

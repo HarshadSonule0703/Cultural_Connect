@@ -104,7 +104,8 @@ public class AuthController {
 	    final String token = jwtTokenUtil.generateToken(
 	            userDetails,
 	            Role.valueOf(role),
-	            user.getUserId()     // ✅ THIS IS THE KEY CHANGE
+	            user.getUserId(),     // ✅ THIS IS THE KEY CHANGE
+	            user.getName()
 	    );
 
 	    log.info("After token generated with userId");

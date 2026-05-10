@@ -5,15 +5,17 @@ import com.culturalconnect.heritage.entity.PreservationActivity;
  
 import java.util.List;
 import java.util.Optional;
- 
+
 public interface PreservationActivityRepository extends JpaRepository<PreservationActivity, Long> {
  
-	List<PreservationActivity> findBySiteId(Long siteId);
+	List<PreservationActivity> findBySiteId(String siteId);
 
  
     Optional<PreservationActivity> findByActivityIdAndSiteId(
             Long activityId,
-            Long siteId
+            String siteId
     );
+    
+    void deleteBySiteId(String siteId);
     
 }
