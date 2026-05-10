@@ -90,10 +90,14 @@ public class CitizenController {
 	public ResponseEntity<String> updateCitizenStatus(
 	        @PathVariable Long citizenId,
 	        @RequestBody UpdateCitizenStatusDto dto) {
+		service.updateStatus(citizenId, dto);
 
-	    service.updateStatus(citizenId, dto);
 
 	    return ResponseEntity.ok("Citizen Status Updated Successfully");
+	}
+	@GetMapping("/by-email/{email}")
+	public Citizen getByEmail(@PathVariable String email) {
+	    return service.getCitizenByEmail(email);
 	}
 	  
 

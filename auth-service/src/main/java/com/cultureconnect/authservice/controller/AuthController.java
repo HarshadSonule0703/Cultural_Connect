@@ -104,7 +104,8 @@ public class AuthController {
 	    final String token = jwtTokenUtil.generateToken(
 	            userDetails,
 	            Role.valueOf(role),
-	            user.getUserId()     // ✅ THIS IS THE KEY CHANGE
+	            user.getUserId(),     // ✅ THIS IS THE KEY CHANGE
+	            user.getName()
 	    );
 
 	    log.info("After token generated with userId");
@@ -115,7 +116,7 @@ public class AuthController {
 	        log.error("Audit logging failed", e);
 	    }
 
-	    return ResponseEntity.ok(new JwtResponse(token));
+	    return ResponseEntity.ok(new JwtResponse(token, user.getEmail()));
 	}
 
 	private void authenticate(String email, String password) {

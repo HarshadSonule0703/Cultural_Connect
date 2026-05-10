@@ -30,11 +30,12 @@ public class JwtTokenUtil implements Serializable {
 
     /* ================= TOKEN GENERATION ================= */
 
-    public String generateToken(UserDetails userDetails, Role role, Long userId) {
+    public String generateToken(UserDetails userDetails, Role role, Long userId,String name) {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role.name());
         claims.put("userId", userId); // ✅ FIX: ADD USER ID
+        claims.put("Username", name);
 
         return doGenerateToken(claims, userDetails.getUsername());
     }

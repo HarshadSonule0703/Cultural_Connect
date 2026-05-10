@@ -17,7 +17,6 @@ import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.CitizenDocumentRepository;
 import com.example.demo.repository.CitizenRepository;
 import com.example.demo.service.CitizenService;
-
 @Service
 public class CitizenServiceImpl implements CitizenService {
 
@@ -37,68 +36,69 @@ public class CitizenServiceImpl implements CitizenService {
 	@Override
 	public Citizen registerCitizen(CitizenDTO dto) {
 
-		// ✅ 1. CALL AUTH-SERVICE
-		UserRegisterRequestDTO userRequest = new UserRegisterRequestDTO();
-		userRequest.setName(dto.getName());
-		userRequest.setEmail(dto.getEmail()); // using email/phone
-		userRequest.setPhone(dto.getPhone());
-		userRequest.setPassword(dto.getPassword()); // default (can improve later)
-		userRequest.setRole("CITIZEN");
+	    // ✅ Generate Citizen ID
+		Long citizenId = System.currentTimeMillis();
+	    // ✅ 1. CALL AUTH-SERVICE
+	    UserRegisterRequestDTO userRequest = new UserRegisterRequestDTO();
+	    userRequest.setUserId(citizenId);   // ✅ PASS SAME ID
+	    userRequest.setName(dto.getName());
+	    userRequest.setEmail(dto.getEmail());
+	    userRequest.setPhone(dto.getPhone());
+	    userRequest.setPassword(dto.getPassword());
+	    userRequest.setRole("CITIZEN");
 
-		try {
-			webClient.post().uri("http://localhost:9999/cultureconnect/citizenRegister").bodyValue(userRequest)
-					.retrieve().bodyToMono(Void.class).block();
-		} catch (Exception e) {
-			throw new RuntimeException("User creation failed in Auth Service");
-		}
+	    try {
+	        webClient.post()
+	                .uri("http://localhost:9999/cultureconnect/citizenRegister")
+	                .bodyValue(userRequest)
+	                .retrieve()
+	                .bodyToMono(Void.class)
+	                .block();
+	    } catch (Exception e) {
+	        throw new RuntimeException("User creation failed in Auth Service");
+	    }
 
-		// ✅ 2. SAVE CITIZEN
-		Citizen c = new Citizen();
-		c.setName(dto.getName());
-		c.setDob(dto.getDob());
-		c.setGender(dto.getGender());
-		c.setAddress(dto.getAddress());
+	    // ✅ 2. SAVE CITIZEN
+	    Citizen c = new Citizen();
+	    c.setCitizenId(citizenId);   // ✅ SET GENERATED ID
+	    c.setName(dto.getName());
+	    c.setDob(dto.getDob());
+	    c.setGender(dto.getGender());
+	    c.setAddress(dto.getAddress());
+	    c.setPhone(dto.getPhone());
+	    c.setEmail(dto.getEmail());
+	    c.setStatus(Status.INACTIVE);
 
-		c.setPhone(dto.getPhone());
-		c.setEmail(dto.getEmail());
+	    Citizen savedCitizen = repository.save(c);
 
-		c.setStatus(Status.INACTIVE);
-		
-		Citizen savedCitizen = repository.save(c);
-		
+	    // ✅ 3. SEND EMAIL (BEST-EFFORT)
+	    try {
+	        UniversalNotificationRequest notification = new UniversalNotificationRequest();
+	        notification.setUserId(savedCitizen.getCitizenId()); // ✅ SAME ID
+	        notification.setEmail(savedCitizen.getEmail());
+	        notification.setCategory("GENERAL");
+	        notification.setEntityId(savedCitizen.getCitizenId());
+	        notification.setMessage(
+	            "✅ Welcome to CultureConnect!\n\n" +
+	            "Dear " + savedCitizen.getName() + ",\n\n" +
+	            "Your registration was successful.\n\n" +
+	            "Regards,\nCultureConnect Team"
+	        );
 
-		// ✅ 3. SEND REGISTRATION SUCCESS EMAIL (BEST-EFFORT)
-		    try {
-		        UniversalNotificationRequest notification = new UniversalNotificationRequest();
-		        notification.setUserId(savedCitizen.getCitizenId());
-		        notification.setEmail(savedCitizen.getEmail());
-		        notification.setCategory("GENERAL");
-		        notification.setEntityId(savedCitizen.getCitizenId());
-		        notification.setMessage(
-		            "✅ Welcome to CultureConnect!\n\n" +
-		            "Dear " + savedCitizen.getName() + ",\n\n" +
-		            "Your registration was successful. You can now log in and explore programs, " +
-		            "apply for grants, and manage your profile.\n\n" +
-		            "Regards,\nCultureConnect Team"
-		        );
+	        webClient.post()
+	                .uri("http://localhost:8085/api/notifications/send-universal")
+	                .bodyValue(notification)
+	                .retrieve()
+	                .bodyToMono(Void.class)
+	                .block();
 
-		        webClient.post()
-		                .uri("http://localhost:8085/api/notifications/send-universal")
-		                .bodyValue(notification)
-		                .retrieve()
-		                .bodyToMono(Void.class)
-		                .block();
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	        System.out.println("⚠ Mail failed, but user created");
+	    }
 
-		    } catch (Exception ex) {
-		        // 🔥 VERY IMPORTANT: Do NOT break registration
-		    	ex.printStackTrace();
-		        System.out.println("⚠ Registration mail failed, but user created successfully");
-		    }
-
-
-		return savedCitizen;
+	    return savedCitizen;
 	}
-	
 	
 	
 	
@@ -229,7 +229,11 @@ public class CitizenServiceImpl implements CitizenService {
 
 	    return repository.save(citizen);
 	}
-
+	@Override
+	public Citizen getCitizenByEmail(String email) {
+	    return repository.findByEmail(email)
+	        .orElseThrow(() -> new RuntimeException("Citizen not found"));
+	}
 
 
 }
