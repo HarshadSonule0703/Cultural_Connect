@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 public class Citizen {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long citizenId;
 
 	@NotBlank(message = "Name must not be blank")

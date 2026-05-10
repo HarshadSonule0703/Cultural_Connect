@@ -27,4 +27,6 @@ public interface CitizenService {
 	void deleteDocument(Long documentId);
 	
 	Citizen updateStatus(Long citizenId,UpdateCitizenStatusDto dto);
+	
+	public Citizen getCitizenByEmail(String email);
 }

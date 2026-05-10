@@ -116,7 +116,7 @@ public class AuthController {
 	        log.error("Audit logging failed", e);
 	    }
 
-	    return ResponseEntity.ok(new JwtResponse(token));
+	    return ResponseEntity.ok(new JwtResponse(token, user.getEmail()));
 	}
 
 	private void authenticate(String email, String password) {

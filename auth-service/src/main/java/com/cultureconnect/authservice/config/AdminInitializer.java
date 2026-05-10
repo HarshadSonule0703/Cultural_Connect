@@ -20,8 +20,9 @@ public class AdminInitializer {
         return args -> {
 
             if (userRepository.findByRole(Role.ADMIN).isEmpty()) {
-
+            	Long userId = System.currentTimeMillis();
                 User admin = new User();
+                admin.setUserId(userId);
                 admin.setName("System Admin");
                 admin.setEmail("admin@cultureconnect.gov");
                 admin.setPhone("9000000000");
