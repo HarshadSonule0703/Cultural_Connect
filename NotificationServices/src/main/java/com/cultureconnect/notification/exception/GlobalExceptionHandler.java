@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("message", "Validation Error: " + ex.getMessage());
-        body.put("module", "HEALTH_GOVERNANCE_SYSTEM");
+        body.put("module", "CULTURE_CONNECT_SYSTEM");
         body.put("status", HttpStatus.BAD_REQUEST.value());
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
