@@ -25,8 +25,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 	
 	@Override
 	public UserDTO registerUser(UserDTO userDto) {
-		
+		Long userId = System.currentTimeMillis();
 		User user = new User();
+		user.setUserId(userId);
 		user.setName(userDto.getName());
 		user.setEmail(userDto.getEmail());
 		if(userDto.getRole() == null) {

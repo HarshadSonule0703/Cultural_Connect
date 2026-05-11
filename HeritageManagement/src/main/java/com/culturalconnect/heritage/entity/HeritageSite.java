@@ -19,8 +19,8 @@ import jakarta.validation.constraints.Size;
 public class HeritageSite {
  
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long siteId;
+    @Column(length = 36)
+    private String siteId;
  
     @NotBlank(message = "Site name cannot be empty")
     @Size(min = 3, max = 100, message = "Name must be between 3 and 100 characters")
@@ -36,6 +36,9 @@ public class HeritageSite {
  
     @NotBlank(message = "Status is required")
     private String status;
+    
+//    @NotBlank(message = "File is required")
+    private String fileUri;
  
     
     @OneToMany(mappedBy = "heritageSite",
@@ -47,12 +50,19 @@ public class HeritageSite {
     public HeritageSite() {
     }
  
+    public String getFileUri() {
+        return fileUri;
+    }
+    
+    public void setFileUri(String fileUri) {
+        this.fileUri = fileUri;
+    }
  
-    public Long getSiteId() {
+    public String getSiteId() {
         return siteId;
     }
  
-    public void setSiteId(Long siteId) {
+    public void setSiteId(String siteId) {
         this.siteId = siteId;
     }
  
