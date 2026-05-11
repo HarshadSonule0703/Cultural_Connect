@@ -31,7 +31,7 @@ import jakarta.validation.Valid;
 
 /**
  * Controller for Citizen management. 
- * Integrated with Notification triggers for Registration, Updates, and Document uploads.
+ * Integrated with Notification triggers and Admin management features.
  */
 @RestController
 @RequestMapping("/api/citizens")
@@ -67,7 +67,7 @@ public class CitizenController {
         return citizen;
     }
 
-    // ================= UPDATE =================
+    // ================= UPDATE & STATUS =================
     @PutMapping("/{id}")
     public Citizen update(@PathVariable Long id, @RequestBody CitizenDTO dto) {
         logger.info("REST Request: Updating citizen ID: {}", id);
