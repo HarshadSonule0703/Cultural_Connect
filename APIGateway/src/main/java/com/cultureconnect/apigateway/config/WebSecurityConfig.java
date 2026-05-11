@@ -49,6 +49,16 @@ public class WebSecurityConfig {
 
                 .pathMatchers("/api/programs/**")
                 .hasAnyRole("MANAGER","ADMIN")
+                
+                .pathMatchers("/api/applications/**")
+                .hasAnyRole("MANAGER","ADMIN")
+                
+                .pathMatchers("/api/events/**")
+                .hasAnyRole("MANAGER","ADMIN")
+                
+                .pathMatchers("/api/resources/**")
+                .hasAnyRole("MANAGER","ADMIN")
+                
 
                 .anyExchange().authenticated()
             )
