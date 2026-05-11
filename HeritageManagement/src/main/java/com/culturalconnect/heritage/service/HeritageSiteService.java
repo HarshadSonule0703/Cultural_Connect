@@ -9,9 +9,9 @@ public interface HeritageSiteService {
 
 	List<HeritageSite> getAllSites();
 
-	HeritageSite getSiteById(Long id);
+	HeritageSite getSiteById(String id);
 
-	HeritageSite updateSite(Long id, HeritageSiteDTO dto);
+	HeritageSite updateSite(String id, HeritageSiteDTO dto);
 
-	void deleteSite(Long id);
+	void deleteSite(String id);
 }

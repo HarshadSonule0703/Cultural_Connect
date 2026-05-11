@@ -26,7 +26,7 @@ public class User {
 
 	@Id
 	//@Min(value = 2500001)
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long userId;
 
 	@NotBlank(message = "Name is mandatory")

@@ -2,8 +2,12 @@ package com.example.demo.entity;
 
 import java.time.LocalDate;
 
+import com.example.demo.enums.Status;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,7 +29,7 @@ import lombok.NoArgsConstructor;
 public class Citizen {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+//	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long citizenId;
 
 	@NotBlank(message = "Name must not be blank")
@@ -56,7 +60,9 @@ public class Citizen {
 	@Column(nullable = false, unique = true)
 	private String email;
 
+	
+	@Enumerated(EnumType.STRING)
 	@NotNull(message = "Status is required")
 	@Column(nullable = false, length = 20)
-	private String status;
+	private Status status;
 }

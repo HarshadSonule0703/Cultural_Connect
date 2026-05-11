@@ -24,6 +24,7 @@ import com.cultureconnect.authservice.dto.ForgetPasswordDto;
 import com.cultureconnect.authservice.dto.JwtResponse;
 import com.cultureconnect.authservice.dto.LoginDTO;
 import com.cultureconnect.authservice.dto.UserDTO;
+import com.cultureconnect.authservice.dto.UserRegisterRequestDTO;
 import com.cultureconnect.authservice.dto.UserReqDTO;
 import com.cultureconnect.authservice.enums.Role;
 import com.cultureconnect.authservice.exception.AuthenticationFailedException;
@@ -31,6 +32,7 @@ import com.cultureconnect.authservice.model.User;
 import com.cultureconnect.authservice.service.AuditLogService;
 import com.cultureconnect.authservice.service.ForgetPasswordService;
 import com.cultureconnect.authservice.service.RegistrationService;
+import com.cultureconnect.authservice.service.UpdateUserService;
 import com.cultureconnect.authservice.serviceimpl.LoginServiceImpl;
 import com.cultureconnect.authservice.serviceimpl.UserService;
 
@@ -76,29 +78,45 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<?> createAuthenticationToken(@RequestBody LoginDTO loginDto) {
-		log.info("Inside Login method {}", loginDto);
 
-		authenticate(loginDto.getEmail(), loginDto.getPassword());
+	    log.info("Inside Login method {}", loginDto);
 
-		log.info("After authentication");
-		final UserDetails userDetails = loginServiceImpl.loadUserByUsername(loginDto.getEmail());
-		log.info("After userdetails");
-		String role = userDetails.getAuthorities().stream().findFirst()
-				.orElseThrow(() -> new RuntimeException("Role not found")).getAuthority().replace("ROLE_", "");
+	    authenticate(loginDto.getEmail(), loginDto.getPassword());
 
-		final String token = jwtTokenUtil.generateToken(userDetails, Role.valueOf(role));
+	    log.info("After authentication");
 
-		log.info("After token generated");
+	    final UserDetails userDetails =
+	            loginServiceImpl.loadUserByUsername(loginDto.getEmail());
 
-		User user = loginServiceImpl.getUserByEmail(loginDto.getEmail());
+	    log.info("After userdetails");
 
-		try {
-			auditLogService.createAuditLog(user, "LOGIN", "AUTH");
-		} catch (Exception e) {
-			log.error("Audit logging failed", e); // ✅ login still succeeds
-		}
+	    String role = userDetails.getAuthorities()
+	            .stream()
+	            .findFirst()
+	            .orElseThrow(() -> new RuntimeException("Role not found"))
+	            .getAuthority()
+	            .replace("ROLE_", "");
 
-		return ResponseEntity.ok(new JwtResponse(token));
+	    // ✅ FETCH USER TO GET USER ID
+	    User user = loginServiceImpl.getUserByEmail(loginDto.getEmail());
+
+	    // ✅ GENERATE TOKEN WITH USER ID INCLUDED
+	    final String token = jwtTokenUtil.generateToken(
+	            userDetails,
+	            Role.valueOf(role),
+	            user.getUserId(),     // ✅ THIS IS THE KEY CHANGE
+	            user.getName()
+	    );
+
+	    log.info("After token generated with userId");
+
+	    try {
+	        auditLogService.createAuditLog(user, "LOGIN", "AUTH");
+	    } catch (Exception e) {
+	        log.error("Audit logging failed", e);
+	    }
+
+	    return ResponseEntity.ok(new JwtResponse(token, user.getEmail()));
 	}
 
 	private void authenticate(String email, String password) {
@@ -127,8 +145,9 @@ public class AuthController {
 
 	 private final UserService userService;
 
-	    public AuthController(UserService userService) {
+	    public AuthController(UserService userService,UpdateUserService updateUserService) {
 	        this.userService = userService;
+	        this.updateUserService = updateUserService;
 	    }
 
 	    @PutMapping("/deactivateUser/{email}")
@@ -149,4 +168,12 @@ public class AuthController {
 		    return service.getUsersByRole(role);
 		}
 	    
+		private final UpdateUserService updateUserService;
+		@PutMapping("/updateUser")
+		public ResponseEntity<?> updateUser(@RequestBody UserRegisterRequestDTO dto) {
+//		    .updateUser(dto);
+			updateUserService.updateUser(dto);
+		    return ResponseEntity.ok("User updated");
+		}
+
 }
