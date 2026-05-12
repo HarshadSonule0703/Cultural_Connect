@@ -29,4 +29,5 @@ public interface CitizenService {
 	Citizen updateStatus(Long citizenId,UpdateCitizenStatusDto dto);
 	
 	public Citizen getCitizenByEmail(String email);
+	
 }
