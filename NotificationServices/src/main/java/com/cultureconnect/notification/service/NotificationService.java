@@ -2,12 +2,22 @@ package com.cultureconnect.notification.service;
 
 import java.util.List;
 
+import com.cultureconnect.notification.dto.CreateNotificationRequest;
 import com.cultureconnect.notification.dto.NotificationDTO;
+import com.cultureconnect.notification.dto.CreatelNotificationRequest;
 
 public interface NotificationService {
-    NotificationDTO sendNotification(NotificationDTO dto);
-    List<NotificationDTO> getNotificationsForUser(Long userId);
-    List<NotificationDTO> getUnreadNotificationsForUser(Long userId);
-    void markAsRead(Long notificationId);
-    void markAllAsRead(Long userId);
+
+	NotificationDTO sendNotification(CreateNotificationRequest request);
+
+	List<NotificationDTO> getAllNotifications();
+
+	List<NotificationDTO> getUserNotifications(Long userId);
+
+	void markAsRead(Long notificationId);
+
+	void deleteNotification(Long id);
+
+	void sendUniversalNotification(CreatelNotificationRequest request);
+
 }

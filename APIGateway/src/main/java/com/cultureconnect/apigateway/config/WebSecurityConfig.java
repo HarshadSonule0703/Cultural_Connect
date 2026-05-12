@@ -1,7 +1,11 @@
+
+
 package com.cultureconnect.apigateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -18,64 +22,50 @@ public class WebSecurityConfig {
 
         return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .cors(ServerHttpSecurity.CorsSpec::disable)
+
+            // ✅ ENABLE CORS (REQUIRED)
+            .cors(Customizer.withDefaults())
+
             .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
             .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
 
-            // ✅ JWT validation filter
-            .addFilterAt(jwtValidationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-
             .authorizeExchange(ex -> ex
+                // ✅ MUST BE FIRST
+                .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // 1️⃣ PUBLIC AUTH ENDPOINTS
                 .pathMatchers(
                     "/cultureconnect/login",
                     "/cultureconnect/citizenRegister",
                     "/cultureconnect/forgotPassword",
+                    "/cultureconnect/forgotPassword/otp",
                     "/api/citizens/register"
                 ).permitAll()
-                .pathMatchers("/cultureconnect/getUserById/{userId}",
-                		"/cultureconnect/userRegisterByAdmin",
-                		"/cultureconnect/audit_log",
-                		"/cultureconnect/getUserByRole/{role}",
-                		"/cultureconnect/deleteUserByAdmin/{userId}").hasAnyRole("ADMIN")
+
+                .pathMatchers("/api/citizens/**")
+                .hasAnyRole("CITIZEN","ADMIN","OFFICER","MANAGER")
+                
+                .pathMatchers("/api/heritage-sites/**")
+                .hasAnyRole("ADMIN","OFFICER","MANAGER")
+
+                .pathMatchers("/api/programs/**")
+                .hasAnyRole("MANAGER","ADMIN","CITIZEN")
+                
+                .pathMatchers("/api/applications/**")
+                .hasAnyRole("MANAGER","ADMIN")
+                
+                .pathMatchers("/api/events/**")
+                .hasAnyRole("MANAGER","ADMIN","CITIZEN")
+                
+                .pathMatchers("/api/resources/**")
+                .hasAnyRole("MANAGER","ADMIN")
                 
 
-                			  // ✅ AUDIT
-                             .pathMatchers("/audit_log/**", "/audits/**")
-                             .hasAnyRole("ADMIN", "AUDITOR")
-
-                             // ✅ CITIZENS
-                             .pathMatchers("/api/citizens/**")
-                             .hasAnyRole("CITIZEN", "ADMIN","OFFICER","MANAGER")
-
-                             // ✅ PROGRAMS & GRANTS
-                             .pathMatchers("/api/programs/**")
-                             .hasAnyRole("MANAGER", "ADMIN")
-
-                             .pathMatchers("/api/applications/**")
-                             .hasAnyRole("CITIZEN", "OFFICER", "ADMIN","MANAGER	")
-
-                             // ✅ COMPLIANCE
-                             .pathMatchers("/compliance/**")
-                             .hasAnyRole("COMPLIANCE","ADMIN")
-
-                             // ✅ EVENTS & RESOURCES
-                             .pathMatchers("/api/events/**", "/api/resources/**")
-                             .hasAnyRole("OFFICER","ADMIN","MANAGER")
-
-                             // ✅ HERITAGE
-                             .pathMatchers("/api/heritage-sites/**", "/api/activities/**")
-                             .hasAnyRole("OFFICER","ADMIN","MANAGER")
-
-                             // ✅ REPORTS
-                             .pathMatchers("/api/reports/**")
-                             .hasAnyRole("MANAGER","ADMIN","AUDITOR")
-
-
-                // 🔒 Everything else secured
                 .anyExchange().authenticated()
             )
+
+            // ✅ JWT AFTER CORS
+            .addFilterAt(jwtValidationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+
             .build();
     }
 }

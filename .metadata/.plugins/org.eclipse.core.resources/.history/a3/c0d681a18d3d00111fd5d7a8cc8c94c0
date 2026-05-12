@@ -1,5 +1,0 @@
-package com.cultureconnect.ComplianceAudit.repository;
-
-public interface NewProgramRepository {
-
-}

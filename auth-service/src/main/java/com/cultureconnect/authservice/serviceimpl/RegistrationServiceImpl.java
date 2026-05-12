@@ -25,8 +25,10 @@ public class RegistrationServiceImpl implements RegistrationService {
 	
 	@Override
 	public UserDTO registerUser(UserDTO userDto) {
-		
+//		Long userId = System.currentTimeMillis();
 		User user = new User();
+		System.out.println(userDto.getUserId());
+		user.setUserId(userDto.getUserId());
 		user.setName(userDto.getName());
 		user.setEmail(userDto.getEmail());
 		if(userDto.getRole() == null) {
@@ -40,6 +42,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 		}else {
 			user.setStatus(userDto.getStatus());
 		}
+		System.out.println(userDto.getPassword());
 		user.setPassword(bcryptEncoder.encode(userDto.getPassword()));
 		
 		registrationRepo.save(user);

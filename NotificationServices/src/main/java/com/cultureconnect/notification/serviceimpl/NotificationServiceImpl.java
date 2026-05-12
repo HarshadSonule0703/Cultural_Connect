@@ -1,5 +1,6 @@
 package com.cultureconnect.notification.serviceimpl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,120 +8,158 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cultureconnect.notification.client.UserClient;
+import com.cultureconnect.notification.dto.CreateNotificationRequest;
+import com.cultureconnect.notification.dto.CreatelNotificationRequest;
 import com.cultureconnect.notification.dto.NotificationDTO;
-import com.cultureconnect.notification.dto.UserReqDTO;
+import com.cultureconnect.notification.dto.UserDTO;
 import com.cultureconnect.notification.entity.Notification;
+import com.cultureconnect.notification.enums.NotificationCategory;
 import com.cultureconnect.notification.enums.NotificationStatus;
+import com.cultureconnect.notification.exception.BadRequestException;
+import com.cultureconnect.notification.exception.NotFoundException;
 import com.cultureconnect.notification.repository.NotificationRepository;
 import com.cultureconnect.notification.service.EmailService;
 import com.cultureconnect.notification.service.NotificationService;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
-    private final NotificationRepository notificationRepo;
+    private final NotificationRepository notificationRepository;
     private final EmailService emailService;
-    
- // INJECT FEIGN CLIENT INSTEAD OF REPOSITORY
     private final UserClient userClient;
-    
 
-    @Override
-    @Transactional // Ensures DB integrity if email or save fails
-    public NotificationDTO sendNotification(NotificationDTO dto) {
-        log.info("Service: Starting notification process for User: {}", dto.getUserId());
-
-     // 1. Fetch User via OpenFeign (Network Call)
-        UserReqDTO user;
-        try {
-            user = userClient.getUserById(dto.getUserId());
-        } catch (Exception e) {
-            log.error("Failed to fetch user {} from User Service", dto.getUserId(), e);
-            throw new RuntimeException("User not found or User Service is down");
-        }
-        
-        // 2. Map DTO to Entity and set default PENDING status
-        Notification notification = new Notification();
-        notification.setUserId(dto.getUserId());
-        notification.setEntityId(dto.getEntityId());
-        notification.setCategory(dto.getCategory());
-        notification.setMessage(dto.getMessage());
-        notification.setStatus(NotificationStatus.PENDING); 
-
-        // 3. Save initial record
-        Notification saved = notificationRepo.save(notification);
-
-        // 4. Attempt Email Dispatch
-        try {
-            emailService.sendSimpleEmail(
-                user.getEmail(), // Pulled from the Feign response
-                "CultureConnect | " + dto.getCategory(), 
-                dto.getMessage()
-            );
-            
-            // 5. If email succeeds, upgrade status to SENT
-            saved.setStatus(NotificationStatus.SENT);
-            notificationRepo.save(saved);
-            log.info("Notification {} successfully dispatched via Email", saved.getNotificationId());
-        } catch (Exception e) {
-            // Logic: Notification is still saved in DB as PENDING for internal app view
-            log.error("Email delivery failed for user {}: {}", user.getEmail(), e.getMessage());
-        }
-
-        return NotificationDTO.fromEntity(saved);
+    public NotificationServiceImpl(NotificationRepository notificationRepository, EmailService emailService,
+            UserClient userClient) {
+        this.notificationRepository = notificationRepository;
+        this.emailService = emailService;
+        this.userClient = userClient;
     }
 
+    // ================= SEND NOTIFICATION (STANDARD FLOW) =================
     @Override
-    @Transactional(readOnly = true)
-    public List<NotificationDTO> getNotificationsForUser(Long userId) {
-        log.debug("Service: Fetching notification history for user {}", userId);
-        return notificationRepo.findByUserIdOrderByCreatedDateDesc(userId).stream()
-                .map(NotificationDTO::fromEntity)
+    @Transactional
+    public NotificationDTO sendNotification(CreateNotificationRequest request) {
+        log.info("Processing standard notification for user: {}", request.getUserId());
+
+        // 1. Attempt to fetch user details (Fault Tolerant)
+        UserDTO user = null;
+        try {
+            user = userClient.getUserById(request.getUserId());
+        } catch (Exception ex) {
+            // ✅ CRITICAL FIX: We log the error but do NOT throw it. 
+            // This prevents the transaction from rolling back if the user isn't in Auth-Service yet.
+            log.warn("Auth Service could not find user {}. Notification will be saved to DB, but email will be skipped.", request.getUserId());
+        }
+        
+        // 2. Determine message based on category template
+        String finalMessage = determineMessage(request.getCategory(), request.getMessage());
+
+        // 3. Save to DB (This now happens even if the UserClient call failed)
+        Notification saved = saveInternal(request.getUserId(), request.getEntityId(), 
+                request.getCategory(), finalMessage);
+
+        // 4. Dispatch Email only if user details were successfully fetched
+        if (user != null && user.getEmail() != null) {
+            try {
+                emailService.sendSimpleEmail(user.getEmail(), "CultureConnect | " + request.getCategory(), 
+                        finalMessage + "\n\nRegards,\nCultureConnect Team");
+            } catch (Exception e) {
+                log.error("Database record saved, but SMTP email dispatch failed: {}", e.getMessage());
+            }
+        }
+
+        return mapToDTO(saved);
+    }
+
+    // ================= UNIVERSAL NOTIFICATION =================
+    @Override
+    @Transactional
+    public void sendUniversalNotification(CreatelNotificationRequest request) {
+        log.info("Processing universal notification for email: {}", request.getEmail());
+
+        if (request.getUserId() == null || request.getEmail() == null || request.getMessage() == null) {
+            throw new BadRequestException("UserId, Email, and Message are all required.");
+        }
+
+        saveInternal(request.getUserId(), request.getEntityId(), request.getCategory(), request.getMessage());
+        emailService.sendSimpleEmail(request.getEmail(), "CultureConnect Notification", request.getMessage());
+    }
+
+    // ================= READ / DELETE OPERATIONS =================
+
+    @Override
+    public List<NotificationDTO> getAllNotifications() {
+        return notificationRepository.findAll().stream()
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Implementation for fetching only unread (PENDING/SENT) notifications
-     */
     @Override
-    @Transactional(readOnly = true)
-    public List<NotificationDTO> getUnreadNotificationsForUser(Long userId) {
-        log.info("Service: Fetching unread notifications for user {}", userId);
-        
-        // FIX: We now fetch anything that is NOT 'READ'
-        return notificationRepo.findByUserIdAndStatusNot(userId, NotificationStatus.READ).stream()
-                .map(NotificationDTO::fromEntity)
+    public List<NotificationDTO> getUserNotifications(Long userId) {
+        return notificationRepository.findByUserId(userId).stream()
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public void markAsRead(Long notificationId) {
-        Notification notification = notificationRepo.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found ID: " + notificationId));
-        
+    public void markAsRead(Long id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Notification not found with ID: " + id));
+
         notification.setStatus(NotificationStatus.READ);
-        notificationRepo.save(notification);
-        log.info("Notification {} marked as READ in database", notificationId);
+        notificationRepository.save(notification);
     }
 
     @Override
     @Transactional
-    public void markAllAsRead(Long userId) {
-        // FIX: Fetch everything that is NOT 'READ' to update them
-        List<Notification> unread = notificationRepo.findByUserIdAndStatusNot(userId, NotificationStatus.READ);
-        
-        if (!unread.isEmpty()) {
-            unread.forEach(n -> n.setStatus(NotificationStatus.READ));
-            notificationRepo.saveAll(unread);
-            log.info("Bulk Update: {} notifications marked as READ for user {}", unread.size(), userId);
-        } else {
-            log.info("No unread notifications to update for user {}", userId);
+    public void deleteNotification(Long id) {
+        if (!notificationRepository.existsById(id)) {
+            throw new NotFoundException("Notification not found with ID: " + id);
         }
+        notificationRepository.deleteById(id);
+    }
+
+    // ================= PRIVATE HELPER LOGIC =================
+
+    private String determineMessage(NotificationCategory category, String manualMessage) {
+        if (manualMessage != null && !manualMessage.isBlank()) {
+            return manualMessage;
+        }
+
+        return switch (category) {
+            case PROJECT -> "New project-related activity at CultureConnect.";
+            case COMPLIANCE -> "A compliance check has been updated.";
+            case GRANT -> "An update is available for your grant application.";
+            case PROGRAM -> "Information about a cultural program has changed.";
+            case GENERAL -> throw new BadRequestException("Message is required when no category template exists.");
+            default -> "New notification from CultureConnect.";
+        };
+    }
+
+    private Notification saveInternal(Long userId, Long entityId, NotificationCategory category, String message) {
+        Notification n = new Notification();
+        n.setUserId(userId);
+        n.setEntityId(entityId);
+        n.setCategory(category != null ? category : NotificationCategory.GENERAL);
+        n.setMessage(message);
+        n.setStatus(NotificationStatus.SENT);
+        n.setCreatedDate(LocalDateTime.now());
+        return notificationRepository.save(n);
+    }
+
+    private NotificationDTO mapToDTO(Notification n) {
+        NotificationDTO dto = new NotificationDTO();
+        dto.setNotificationId(n.getId());
+        dto.setUserId(n.getUserId());
+        dto.setEntityId(n.getEntityId());
+        dto.setMessage(n.getMessage());
+        dto.setCategory(n.getCategory());
+        dto.setStatus(n.getStatus().name());
+        dto.setCreatedDate(n.getCreatedDate());
+        return dto;
     }
 }

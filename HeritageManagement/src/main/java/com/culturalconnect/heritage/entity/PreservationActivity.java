@@ -12,7 +12,7 @@ public class PreservationActivity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long activityId;
     
-    private Long siteId;
+    private String siteId;
     
     @NotBlank(message = "Activity description cannot be empty")
     @Size(max = 500)
@@ -66,11 +66,11 @@ public class PreservationActivity {
         return status;
     }
  
-    public Long getSiteId() {
+    public String getSiteId() {
 		return siteId;
 	}
 
-	public void setSiteId(Long siteId) {
+	public void setSiteId(String siteId) {
 		this.siteId = siteId;
 	}
 

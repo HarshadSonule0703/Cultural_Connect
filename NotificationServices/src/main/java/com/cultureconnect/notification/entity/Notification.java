@@ -2,8 +2,6 @@ package com.cultureconnect.notification.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import com.cultureconnect.notification.enums.NotificationCategory;
 import com.cultureconnect.notification.enums.NotificationStatus;
 
@@ -14,31 +12,36 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
+
 @Entity
+@Table(name = "notifications", indexes = @Index(columnList = "userId"))
 @Data
 public class Notification {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long notificationId;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    private Long entityId;
+	@Column(nullable = false)
+	private Long userId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false) // Database constraint
-    private NotificationCategory category;
+	@Column(name = "EntityID")
+	private Long entityId;
 
-    @Column(nullable = false, length = 1000) // Database constraint
-    private String message;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private NotificationCategory category;
 
-    @Enumerated(EnumType.STRING)
-    private NotificationStatus status = NotificationStatus.PENDING;
+	@Column(nullable = false, length = 2000)
+	private String message;
 
-    @CreationTimestamp
-    private LocalDateTime createdDate;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private NotificationStatus status;
+
+	@Column(nullable = false)
+	private LocalDateTime createdDate;
 }

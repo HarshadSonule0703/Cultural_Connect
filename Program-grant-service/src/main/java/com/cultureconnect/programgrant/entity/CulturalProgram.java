@@ -62,7 +62,7 @@ public class CulturalProgram {
     @NotNull(message = "Program status is required")
     @Column(nullable = false)
     private Status status = Status.PENDING;
-
+    
     // METRICS FIELDS (Required for Reporting/Dashboard)
     private Integer participants = 0;
     private Double successRate = 0.0;

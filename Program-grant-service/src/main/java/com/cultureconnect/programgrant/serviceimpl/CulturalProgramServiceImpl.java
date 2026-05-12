@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cultureconnect.programgrant.dto.CulturalProgramRequestDto;
+import com.cultureconnect.programgrant.dto.CulturalProgramResponseCitizenDto;
 import com.cultureconnect.programgrant.dto.CulturalProgramResponseDto;
 import com.cultureconnect.programgrant.entity.CulturalProgram;
 import com.cultureconnect.programgrant.entity.Grant;
@@ -66,6 +67,14 @@ public class CulturalProgramServiceImpl implements CulturalProgramService {
                 .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + id));
         return mapToResponseDto(program);
     }
+    
+    @Override
+	public List<CulturalProgramResponseCitizenDto> getAllProgramsForCitizen() {
+    	return programRepository.findAll().stream()
+                .map(this::mapToCitizenResponseDto)
+                .toList();
+	}
+ 
 
     /**
      * Updates an existing program.
@@ -153,5 +162,19 @@ public class CulturalProgramServiceImpl implements CulturalProgramService {
                 grantIds,
                 eventIds
         );
+    }
+    private CulturalProgramResponseCitizenDto mapToCitizenResponseDto(CulturalProgram program) {
+    	 
+        Long programId = program.getProgramId();
+        System.out.println("Budget: " + program.getBudget());
+
+ 
+        return new CulturalProgramResponseCitizenDto(
+                programId,
+                program.getName(),
+                program.getDescription(),
+                program.getStartDate(),
+                program.getEndDate(),
+                program.getBudget()        );
     }
 }
