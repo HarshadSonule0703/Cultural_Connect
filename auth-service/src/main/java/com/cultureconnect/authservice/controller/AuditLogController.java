@@ -23,4 +23,8 @@ public class AuditLogController {
 	    public List<AuditLog> getAuditLogs(@PathVariable Long userId) {
 	        return auditLogService.getAuditLogsByUser(userId);
 	    }
+	 @GetMapping("/getAll")
+	 public List<AuditLog> getAllLogs() {
+	     return auditLogService.getAllAuditLogs();
+	 }
 }

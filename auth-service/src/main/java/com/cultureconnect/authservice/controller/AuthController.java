@@ -176,4 +176,10 @@ public class AuthController {
 		    return ResponseEntity.ok("User updated");
 		}
 
+		@GetMapping("/getAllUsers")
+		public ResponseEntity<List<UserReqDTO>> getAllUsers() {
+		    log.info("Admin request: Fetching all registered users");
+		    List<UserReqDTO> users = service.getAllUsers();
+		    return ResponseEntity.ok(users);
+		}
 }

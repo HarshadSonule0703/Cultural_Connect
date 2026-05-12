@@ -11,5 +11,6 @@ public interface AuditLogService {
     void createAuditLog(User user, String action, String resource);
 
     List<AuditLog> getAuditLogsByUser(Long userId);
+    List<AuditLog> getAllAuditLogs();
 }
 
