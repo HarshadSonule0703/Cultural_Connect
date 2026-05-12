@@ -21,6 +21,7 @@ import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
 import com.cultureconnect.programgrant.dto.GrantApprovalDto;
 import com.cultureconnect.programgrant.enums.NotificationCategory;
 import com.cultureconnect.programgrant.enums.Status;
+import com.cultureconnect.programgrant.repository.GrantApplicationRepository;
 import com.cultureconnect.programgrant.service.GrantApplicationService;
 
 import jakarta.validation.Valid;
@@ -33,26 +34,61 @@ public class GrantApplicationController {
 
     private static final Logger logger = LoggerFactory.getLogger(GrantApplicationController.class);
 
+    private final GrantApplicationRepository applicationRepository;
     private final GrantApplicationService applicationService;
     private final NotificationClient notificationClient; // ✅ Inject Client
 
+//    @PostMapping("/submitApplication")
+//    public ResponseEntity<GrantApplicationResponseDto> submitApplication(
+//            @Valid @RequestBody GrantApplicationRequestDto requestDto) {
+//        
+//        logger.info("REST Request: New Application for Citizen ID: {}", requestDto.getCitizenId());
+//        GrantApplicationResponseDto response = applicationService.submitApplication(requestDto);
+//        
+//        // 🔵 TRIGGER: Notify the Citizen that application is received
+//        triggerNotification(
+//            response.getCitizenId(), 
+//            response.getApplicationId(), 
+//            NotificationCategory.GRANT, 
+//            "Your grant application has been submitted successfully! Application ID: " + response.getApplicationId()
+//        );
+//
+//        return new ResponseEntity<>(response, HttpStatus.CREATED);
+//    }
     @PostMapping("/submitApplication")
-    public ResponseEntity<GrantApplicationResponseDto> submitApplication(
+    public ResponseEntity<?> submitApplication(
             @Valid @RequestBody GrantApplicationRequestDto requestDto) {
-        
-        logger.info("REST Request: New Application for Citizen ID: {}", requestDto.getCitizenId());
-        GrantApplicationResponseDto response = applicationService.submitApplication(requestDto);
-        
-        // 🔵 TRIGGER: Notify the Citizen that application is received
-        triggerNotification(
-            response.getCitizenId(), 
-            response.getApplicationId(), 
-            NotificationCategory.GRANT, 
-            "Your grant application has been submitted successfully! Application ID: " + response.getApplicationId()
-        );
 
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        try {
+            GrantApplicationResponseDto response =
+                    applicationService.submitApplication(requestDto);
+
+//            triggerNotification(
+//                response.getCitizenId(),
+//                response.getApplicationId(),
+//                NotificationCategory.GRANT,
+//                "Your grant application has been submitted successfully! Application ID: " 
+//                + response.getApplicationId()
+//            );
+
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (IllegalStateException ex) {
+
+            // ✅ RETURN CLEAN 400 RESPONSE
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Already applied for this program");
+
+        } catch (Exception ex) {
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Something went wrong");
+
+        }
     }
+
 
     @PatchMapping("/status/{id}")
     public ResponseEntity<GrantApplicationResponseDto> updateStatus(
@@ -95,6 +131,14 @@ public class GrantApplicationController {
     @GetMapping("/status/{status}")
     public ResponseEntity<List<GrantApplicationResponseDto>> getByStatus(@PathVariable Status status) {
         return ResponseEntity.ok(applicationService.getApplicationsByStatus(status));
+    }
+    @GetMapping("/check/{citizenId}/{programId}")
+    public Boolean checkApplication(
+            @PathVariable Long citizenId,
+            @PathVariable Long programId) {
+
+        return applicationRepository
+            .existsByCitizenIdAndProgramId(citizenId, programId);
     }
 
     // Helper Trigger Method

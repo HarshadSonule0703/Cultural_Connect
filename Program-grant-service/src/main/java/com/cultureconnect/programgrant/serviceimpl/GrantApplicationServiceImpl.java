@@ -37,20 +37,48 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
     private final GrantService grantService;
     private final NotificationClient notificationClient;
 
+//    @Override
+//    @Transactional
+//    public GrantApplicationResponseDto submitApplication(GrantApplicationRequestDto dto) {
+//        var citizen = citizenClient.getCitizenById(dto.getCitizenId());
+//
+//        CulturalProgram program = programRepository.findById(dto.getProgramId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + dto.getProgramId()));
+//
+//        GrantApplication application = new GrantApplication();
+//        application.setCitizenId(dto.getCitizenId());
+//        application.setProgramId(dto.getProgramId());
+//        application.setStatus(Status.PENDING);
+//        applicationRepository.save(application);
+//
+//       
+//        return mapToResponseDto(application, program.getName());
+//    }
     @Override
     @Transactional
     public GrantApplicationResponseDto submitApplication(GrantApplicationRequestDto dto) {
+
+        // ✅ ✅ CHECK BEFORE INSERT
+        boolean alreadyApplied =
+            applicationRepository.existsByCitizenIdAndProgramId(
+                dto.getCitizenId(), dto.getProgramId()
+            );
+
+        if (alreadyApplied) {
+        	throw new IllegalStateException("ALREADY_APPLIED");
+        }
+
         var citizen = citizenClient.getCitizenById(dto.getCitizenId());
 
         CulturalProgram program = programRepository.findById(dto.getProgramId())
-                .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + dto.getProgramId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
 
         GrantApplication application = new GrantApplication();
         application.setCitizenId(dto.getCitizenId());
         application.setProgramId(dto.getProgramId());
         application.setStatus(Status.PENDING);
-        applicationRepository.save(application);
 
+        applicationRepository.save(application);
         // ✅ FIXED: Use the centralized notification helper
         sendNotificationHelper(
             application.getCitizenId(),
@@ -60,8 +88,11 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
             "✅ Your grant application for program '" + program.getName() + "' has been submitted successfully."
         );
 
+
         return mapToResponseDto(application, program.getName());
     }
+
+
 
     @Override
     @Transactional
