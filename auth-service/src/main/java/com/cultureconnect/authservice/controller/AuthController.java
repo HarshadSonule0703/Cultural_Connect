@@ -72,7 +72,7 @@ public class AuthController {
 
 	@PostMapping("/userRegisterByAdmin")
 	public ResponseEntity<UserDTO> addCitizenAsperRole(@RequestBody UserDTO userDTO) {
-		UserDTO savedDto = registrationService.registerUser(userDTO);
+		UserDTO savedDto = registrationService.registerUserByAdmin(userDTO);
 		return new ResponseEntity<>(savedDto, HttpStatus.CREATED);
 	}
 
