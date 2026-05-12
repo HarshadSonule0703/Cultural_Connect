@@ -20,5 +20,6 @@ public interface GrantApplicationRepository extends JpaRepository<GrantApplicati
 	// Finds applications filtered by the Status enum
     List<GrantApplication> findByStatus(Status status);
     
+    boolean existsByCitizenIdAndProgramId(Long citizenId, Long programId);
    
 }
