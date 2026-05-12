@@ -166,14 +166,15 @@ public class CulturalProgramServiceImpl implements CulturalProgramService {
     private CulturalProgramResponseCitizenDto mapToCitizenResponseDto(CulturalProgram program) {
     	 
         Long programId = program.getProgramId();
- 
+        System.out.println("Budget: " + program.getBudget());
+
  
         return new CulturalProgramResponseCitizenDto(
                 programId,
                 program.getName(),
                 program.getDescription(),
                 program.getStartDate(),
-                program.getEndDate()
-        );
+                program.getEndDate(),
+                program.getBudget()        );
     }
 }
