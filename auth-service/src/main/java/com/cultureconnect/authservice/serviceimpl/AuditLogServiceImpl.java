@@ -36,4 +36,8 @@ public class AuditLogServiceImpl implements AuditLogService {
 	public List<AuditLog> getAuditLogsByUser(Long userId) {
 		return auditLogRepo.findByUser_UserId(userId);
 	}
+	@Override
+	public List<AuditLog> getAllAuditLogs() {
+	    return auditLogRepo.findAll();
+	}
 }
