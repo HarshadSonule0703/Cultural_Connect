@@ -8,8 +8,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -65,4 +63,6 @@ public class Citizen {
 	@NotNull(message = "Status is required")
 	@Column(nullable = false, length = 20)
 	private Status status;
+	
+
 }
