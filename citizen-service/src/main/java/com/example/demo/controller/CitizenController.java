@@ -1,9 +1,5 @@
 package com.example.demo.controller;
-<<<<<<< HEAD
 
-=======
- 
->>>>>>> 9707d2cf5eab1e1f359c08750efd6e80e62c087d
 import java.util.List;
 
 import org.slf4j.Logger;
