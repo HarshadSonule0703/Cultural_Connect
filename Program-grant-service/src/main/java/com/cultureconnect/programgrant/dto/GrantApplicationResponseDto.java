@@ -22,4 +22,12 @@ public class GrantApplicationResponseDto {
     private String programName; // Changed from programTitle to match Entity
     private LocalDateTime submittedDate; // Changed from LocalDate to match Entity
     private Status status;
+    private Double grantAmount;
+    
+    private String citizenName;
+    private String citizenEmail;
+    private Double programBudget;
+    private Double remainingBudget;
+
+
 }

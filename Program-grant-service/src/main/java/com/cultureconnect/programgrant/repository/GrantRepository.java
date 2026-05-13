@@ -42,4 +42,6 @@ public interface GrantRepository extends JpaRepository<Grant, Long> {
 @Query("SELECT SUM(g.amount) FROM Grant g WHERE g.programId = :programId")
     Double getTotalAllocatedAmountByProgramId(Long programId);
 
+	Grant findByCitizenIdAndProgramId(Long citizenId, Long programId);
+
 }
