@@ -52,11 +52,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 		userDTO2.setRole(user.getRole());
 		return userDTO2;
 	}
-<<<<<<< HEAD
-	
-	
-	
-=======
+
 	@Override
 	public UserDTO registerUserByAdmin(UserDTO userDto) {
 		Long userId = System.currentTimeMillis();
@@ -88,7 +84,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 		userDTO2.setRole(user.getRole());
 		return userDTO2;
 	}
->>>>>>> 9e1f98eb586bf183b09a227d98e64ce8969ce81b
+
 	@Override
 	public String deleteUserByAdmin(Long userId) {
 		User user = registrationRepo.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found"));

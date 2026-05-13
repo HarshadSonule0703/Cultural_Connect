@@ -164,10 +164,16 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     public List<GrantApplicationResponseDto> getAllApplications() {
         return applicationRepository.findAll().stream().map(this::mapToResponseDto).toList();
     }
+    
+    @Override
+//  @Transactional(readOnly = true)
+	  public List<GrantApplication> getAllApplicationsForReport() {
+	      return applicationRepository.findAll();
+	  }
 
     @Override
     @Transactional(readOnly = true)
