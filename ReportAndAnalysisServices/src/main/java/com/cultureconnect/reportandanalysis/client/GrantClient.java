@@ -10,7 +10,7 @@ import com.cultureconnect.reportandanalysis.dto.GrantDTO;
 @FeignClient(name = "PROGRAM-GRANT-SERVICE") 
 public interface GrantClient {
 
-    // Exact match to their controller (including their typo!)
+    // ✅ Points to your dedicated Report API
     @GetMapping("/api/applications/getAllApplicaitonForReport")
-    List<GrantDTO> getAllApplications(); 
+    List<GrantDTO> getAllApplicationsForReport(); 
 }

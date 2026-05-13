@@ -169,11 +169,78 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
         return applicationRepository.findAll().stream().map(this::mapToResponseDto).toList();
     }
     
+    
+//    FOR Report Service To CALL ////////////////////////////////////////////////////////////////
+    
     @Override
-//  @Transactional(readOnly = true)
-	  public List<GrantApplication> getAllApplicationsForReport() {
-	      return applicationRepository.findAll();
-	  }
+    @Transactional(readOnly = true)
+    public List<GrantApplicationResponseDto> getAllApplicationsForReport() {
+        return applicationRepository.findAll().stream()
+            .map(app -> {
+                // 1. Get Program safely
+                String programName = "Unknown Program";
+                Double budget = 0.0;
+                Double remainingBudget = 0.0;
+                try {
+                    CulturalProgram program = programRepository.findById(app.getProgramId()).orElse(null);
+                    if (program != null) {
+                        programName = program.getName();
+                        budget = program.getBudget();
+                        
+                        Double allocated = grantRepository.getTotalAllocatedAmountByProgramId(app.getProgramId());
+                        remainingBudget = budget - (allocated == null ? 0.0 : allocated);
+                    }
+                } catch (Exception e) { 
+                    logger.warn("Program not found for Report"); 
+                }
+
+                // 2. Get Citizen safely (✅ THIS PREVENTS THE 500 CRASH!)
+                String citizenName = "Unknown Citizen";
+                String email = "N/A";
+                try {
+                    var citizen = citizenClient.getCitizenById(app.getCitizenId());
+                    if (citizen != null && citizen.getName() != null) {
+                        citizenName = citizen.getName();
+                        email = citizen.getEmail();
+                    }
+                } catch (Exception e) { 
+                    logger.warn("Citizen not found for Report Application ID: {}", app.getApplicationId()); 
+                }
+
+                // 3. Get Grant Amount safely
+                Double grantAmount = null;
+                if (app.getStatus() == Status.APPROVED) {
+                    try {
+                        Grant grant = grantRepository.findByCitizenIdAndProgramId(app.getCitizenId(), app.getProgramId());
+                        if (grant != null) {
+                            grantAmount = grant.getAmount();
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Grant mapping failed for Report");
+                    }
+                }
+
+                // 4. Return the fully mapped DTO
+                return new GrantApplicationResponseDto(
+                    app.getApplicationId(),
+                    app.getCitizenId(),
+                    app.getProgramId(),
+                    programName,
+                    app.getSubmittedDate(),
+                    app.getStatus(),
+                    grantAmount,
+                    citizenName,
+                    email,
+                    budget,
+                    remainingBudget
+                );
+            }).toList();
+    }
+    
+    
+    /////////////////////////////////////////////////////////////////////////////////////////
+    
+    
 
     @Override
     @Transactional(readOnly = true)

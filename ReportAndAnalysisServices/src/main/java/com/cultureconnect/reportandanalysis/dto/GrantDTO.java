@@ -4,6 +4,10 @@ import lombok.Data;
 
 @Data
 public class GrantDTO {
-    private String grantCode;
+    private Long applicationId;
+    private String citizenName;
+    private String programName;
     private String status;
+    private Double grantAmount;
+    private String submittedDate;
 }

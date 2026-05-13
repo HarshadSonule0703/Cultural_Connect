@@ -50,20 +50,22 @@ public class ReportServiceImpl implements ReportService {
     public DashboardSummaryDTO getDashboardSummary() {
         log.info("Fetching dashboard statistics via OpenFeign...");
         try {
-            // Fetch the lists directly from the other services
             List<ProgramDTO> programs = programClient.getAllPrograms();
-            List<GrantDTO> grants = grantClient.getAllApplications(); // Using the correct method name!
+            
+            // ✅ CALL THE NEW METHOD
+            List<GrantDTO> grants = grantClient.getAllApplicationsForReport(); 
+            
             List<EventDTO> events = eventClient.getAllEvents();
 
             return new DashboardSummaryDTO(
-                (long) programs.size(),      // Count them locally!
-                (long) grants.size(),        // Count them locally!
-                (long) events.size(),        // Count them locally!
+                (long) programs.size(),      
+                (long) grants.size(),        
+                (long) events.size(),        
                 calculateComplianceRate()
             );
         } catch (Exception e) {
-            log.error("Failed to fetch dashboard summary from external services", e);
-            throw new RuntimeException("One or more upstream services are currently unavailable.");
+            log.error("Failed to fetch dashboard summary", e);
+            throw new RuntimeException("Upstream service unavailable.");
         }
     }
 
@@ -142,40 +144,52 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
-    // --- HELPER METHODS FOR FEIGN CALLS ---
+ // --- HELPER METHODS FOR FEIGN CALLS ---
 
     private void addProgramMetrics(Map<String, Object> metrics) {
         List<ProgramDTO> programs = programClient.getAllPrograms();
-        metrics.put(METRIC_COUNT_KEY, programs.size()); // Count locally
+        metrics.put(METRIC_COUNT_KEY, programs.size());
         
         metrics.put(METRIC_ITEMS_KEY, programs.stream().map(p -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("name", p.getName() != null ? p.getName() : "Unknown");
-            m.put("budget", p.getBudget() != null ? p.getBudget() : 0.0);
+            m.put("ID", p.getId());
+            m.put("Program Name", p.getName() != null ? p.getName() : "Unknown");
+            m.put("Status", p.getStatus() != null ? p.getStatus() : "N/A");
+            m.put("Budget", p.getBudget() != null ? p.getBudget() : 0.0);
+            m.put("Start Date", p.getStartDate() != null ? p.getStartDate() : "N/A");
+            m.put("End Date", p.getEndDate() != null ? p.getEndDate() : "N/A");
             return m;
         }).collect(Collectors.toList()));
     }
 
     private void addGrantMetrics(Map<String, Object> metrics) {
-        List<GrantDTO> grants = grantClient.getAllApplications(); // Correct method name
-        metrics.put(METRIC_COUNT_KEY, grants.size()); // Count locally
+        // ✅ CALL THE NEW METHOD
+        List<GrantDTO> grants = grantClient.getAllApplicationsForReport(); 
+        metrics.put(METRIC_COUNT_KEY, grants.size()); 
         
         metrics.put(METRIC_ITEMS_KEY, grants.stream().map(g -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("grantCode", g.getGrantCode() != null ? g.getGrantCode() : "N/A");
-            m.put("status", g.getStatus() != null ? g.getStatus().toString() : "Pending");
+            m.put("App ID", g.getApplicationId()); // Using Application ID
+            m.put("Applicant", g.getCitizenName() != null ? g.getCitizenName() : "Unknown");
+            m.put("Program", g.getProgramName() != null ? g.getProgramName() : "Unknown");
+            m.put("Status", g.getStatus() != null ? g.getStatus() : "Pending");
+            m.put("Grant Amount", g.getGrantAmount() != null ? "$" + g.getGrantAmount() : "Not Disbursed");
+            m.put("Date Submitted", g.getSubmittedDate() != null ? g.getSubmittedDate() : "N/A");
             return m;
         }).collect(Collectors.toList()));
     }
 
     private void addEventMetrics(Map<String, Object> metrics) {
         List<EventDTO> events = eventClient.getAllEvents();
-        metrics.put(METRIC_COUNT_KEY, events.size()); // Count locally
+        metrics.put(METRIC_COUNT_KEY, events.size()); 
         
         metrics.put(METRIC_ITEMS_KEY, events.stream().map(e -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("eventName", e.getName() != null ? e.getName() : "Unnamed");
-            m.put("rating", e.getRating() != null ? e.getRating() : 0.0);
+            m.put("Event ID", e.getId());
+            m.put("Event Name", e.getName() != null ? e.getName() : "Unnamed");
+            m.put("Location", e.getLocation() != null ? e.getLocation() : "TBD");
+            m.put("Date", e.getDate() != null ? e.getDate() : "TBD");
+            m.put("Status", e.getStatus() != null ? e.getStatus() : "N/A");
             return m;
         }).collect(Collectors.toList()));
     }
