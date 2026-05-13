@@ -3,6 +3,7 @@ package com.cultureconnect.reportandanalysis.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,7 +46,7 @@ public class ReportController {
      * @param scope Must be PROGRAM, GRANT, or EVENT.
      */
     @PostMapping("/generate")
-    public ResponseEntity<ApiResponse<ReportDTO>> generateReport(@RequestParam Report.ReportScope scope) {
+    public ResponseEntity<ApiResponse<ReportDTO>> generateReport(@RequestParam("scope") Report.ReportScope scope) {
         log.info("REST request to generate report for scope: {}", scope);
         ReportDTO report = reportService.generateReport(scope);
         return ResponseEntity.ok(ApiResponse.success("Report generated successfully", report));
@@ -69,5 +70,18 @@ public class ReportController {
         log.info("REST request to fetch report with ID: {}", id);
         ReportDTO report = reportService.getReportById(id);
         return ResponseEntity.ok(ApiResponse.success("Report fetched", report));
+    }
+    
+    /**
+     * Deletes a generated report by its Database ID.
+     */
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteReport(@PathVariable Long id) {
+        log.info("REST request to delete report with ID: {}", id);
+        
+        reportService.deleteReport(id);
+        
+        // Return a success message
+        return ResponseEntity.ok(ApiResponse.success("Report deleted successfully", "Deleted ID: " + id));
     }
 }
