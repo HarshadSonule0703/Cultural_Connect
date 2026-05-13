@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 2026-05-12 12:00:43 [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 9.0.1.Final
 2026-05-12 12:00:43 [restartedMain] INFO  c.c.h.HeritageManagementApplication - Starting HeritageManagementApplication using Java 21.0.8 with PID 17232 (C:\Users\2481358\git\Final_Merged_CultureConnect\Cultural_Connect\HeritageManagement\target\classes started by 2481358 in C:\Users\2481358\git\Final_Merged_CultureConnect\Cultural_Connect\HeritageManagement)
 2026-05-12 12:00:43 [restartedMain] INFO  c.c.h.HeritageManagementApplication - No active profile set, falling back to 1 default profile: "default"
@@ -2082,3 +2083,5 @@ Caused by: java.sql.SQLException: Referencing column 'heritage_site_site_id' and
 2026-05-13 18:20:36 [RMI TCP Connection(130)-127.0.0.1] INFO  c.netflix.discovery.DiscoveryClient - Unregistering ...
 2026-05-13 18:20:36 [RMI TCP Connection(130)-127.0.0.1] INFO  c.netflix.discovery.DiscoveryClient - DiscoveryClient_HERITAGE-MANAGEMENT/LTIN717963.cts.com:heritage-management:8086 - deregister  status: 200
 2026-05-13 18:20:36 [RMI TCP Connection(130)-127.0.0.1] INFO  c.netflix.discovery.DiscoveryClient - Completed shut down of DiscoveryClient
+=======
+>>>>>>> b16c0cdb2f576dcc1c3bef4dc4c19e6dc83de873

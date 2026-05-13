@@ -62,6 +62,9 @@ public class WebSecurityConfig {
                 .pathMatchers("/api/notifications/**")
                 .hasAnyRole("CITIZEN","ADMIN","OFFICER","MANAGER")
                 
+                .pathMatchers("/api/reports/**")
+                .hasAnyRole("CITIZEN","ADMIN","OFFICER","MANAGER")
+                
 
                 .anyExchange().authenticated()
             )
