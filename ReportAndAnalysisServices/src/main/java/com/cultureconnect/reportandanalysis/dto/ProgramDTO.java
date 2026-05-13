@@ -1,12 +1,20 @@
 package com.cultureconnect.reportandanalysis.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
 public class ProgramDTO {
-    @JsonProperty("title") // (Assuming Program also uses 'title'. If it uses 'name', you can remove this!)
+    @JsonProperty("programId")
+    private Long id;
+    
+    @JsonProperty("title") 
     private String name;
     
+    private String description;
+    private String status;
     private Double budget;
+    private String startDate;
+    private String endDate;
 }

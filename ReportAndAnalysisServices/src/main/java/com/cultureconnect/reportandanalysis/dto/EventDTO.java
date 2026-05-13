@@ -1,13 +1,18 @@
 package com.cultureconnect.reportandanalysis.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
 public class EventDTO {
-    // Tells Feign: "Take the 'title' from their JSON and put it in my 'name' variable"
-    @JsonProperty("title") 
-    private String name; 
+    @JsonProperty("eventId")
+    private Long id;
     
-    private Double rating;
+    @JsonProperty("title") 
+    private String name;
+    
+    private String location;
+    private String date;
+    private String status;
 }
