@@ -28,7 +28,7 @@ public class CorsConfig {
 
         // ✅ MUST include OPTIONS
         config.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH")
         );
 
         // ✅ Auth-based systems

@@ -16,4 +16,5 @@ public class GrantApplicationResponseDto {
     private String programName;
     private LocalDateTime submittedDate;
     private Status status;
+    private Double grantAmount;
 }
