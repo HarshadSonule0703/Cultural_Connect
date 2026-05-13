@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.cultureconnect.reportandanalysis.dto.EventDTO;
 
-@FeignClient(name = "EVENT-SERVICE")
+@FeignClient(name = "event-resource-service")
 public interface EventClient {
     
     // Exact match to their controller
