@@ -19,6 +19,7 @@ import com.cultureconnect.programgrant.dto.CreateNotificationRequest;
 import com.cultureconnect.programgrant.dto.GrantApplicationRequestDto;
 import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
 import com.cultureconnect.programgrant.dto.GrantApprovalDto;
+import com.cultureconnect.programgrant.entity.GrantApplication;
 import com.cultureconnect.programgrant.enums.NotificationCategory;
 import com.cultureconnect.programgrant.enums.Status;
 import com.cultureconnect.programgrant.repository.GrantApplicationRepository;
@@ -116,6 +117,11 @@ public class GrantApplicationController {
     @GetMapping("/getAllApplicaiton")
     public ResponseEntity<List<GrantApplicationResponseDto>> getAllApplications() {
         return ResponseEntity.ok(applicationService.getAllApplications());
+    }
+    
+    @GetMapping("/getAllApplicaitonForReport")
+    public List<GrantApplication> getAllApplicaitonForReport() {
+        return applicationService.getAllApplicationsForReport();
     }
 
     @GetMapping("/citizen/{citizenId}")

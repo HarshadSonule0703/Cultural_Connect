@@ -72,12 +72,21 @@ public class ReportServiceImpl implements ReportService {
         List<ComplianceDTO> records = complianceClient.getAllComplianceRecords();
         
         long total = records.size();
+        log.info("Total compliance records fetched: {}", total); // 👈 SEE HOW MANY IT FOUND
+        
         if (total == 0) return 0.0;
+
+        // 👈 PRINT OUT EVERY SINGLE RECORD TO SEE WHAT IS WRONG
+        for (ComplianceDTO record : records) {
+            log.info("Record ID: {}, Status: {}", record.getId(), record.getStatus());
+        }
 
         // Count how many are 'VERIFIED' locally!
         long successCount = records.stream()
-            .filter(c -> c.getStatus() != null && "VERIFIED".equalsIgnoreCase(c.getStatus().toString()))
+            .filter(c -> c.getStatus() != null && "VERIFIED".equalsIgnoreCase(c.getStatus().trim()))
             .count();
+            
+        log.info("Total VERIFIED records found: {}", successCount); // 👈 SEE THE COUNT
             
         return (successCount * 100.0) / total;
     }
