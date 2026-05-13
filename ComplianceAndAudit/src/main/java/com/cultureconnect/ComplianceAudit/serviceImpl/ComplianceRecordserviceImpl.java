@@ -1,12 +1,12 @@
 package com.cultureconnect.ComplianceAudit.serviceImpl;
-
+ 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
+ 
 import com.cultureconnect.ComplianceAudit.client.EventClient;
 import com.cultureconnect.ComplianceAudit.client.GrantClient;
 import com.cultureconnect.ComplianceAudit.client.ProgramClient;
@@ -18,22 +18,22 @@ import com.cultureconnect.ComplianceAudit.exception.ResourceNotFoundException;
 import com.cultureconnect.ComplianceAudit.repository.ComplianceRecordRepository;
 import com.cultureconnect.ComplianceAudit.repository.NewProgramRepository;
 import com.cultureconnect.ComplianceAudit.service.ComplianceRecordService;
-
+ 
 import org.springframework.transaction.annotation.Transactional;
-
-
+ 
+ 
 import feign.FeignException;
-
+ 
 import com.cultureconnect.ComplianceAudit.dto.CulturalProgramRequestDto;
 import com.cultureconnect.ComplianceAudit.dto.CulturalProgramResponseDto;
 import com.cultureconnect.ComplianceAudit.entity.NewProgram;
-
+ 
 import lombok.RequiredArgsConstructor;
-
+ 
 @Service
 @RequiredArgsConstructor
 public class ComplianceRecordserviceImpl implements ComplianceRecordService {
-
+ 
     private static final Logger logger = LoggerFactory.getLogger(ComplianceRecordserviceImpl.class);
     private final ComplianceRecordRepository repository;
     private final NewProgramRepository newprogramrepository;
@@ -42,43 +42,43 @@ public class ComplianceRecordserviceImpl implements ComplianceRecordService {
     private final ProgramClient programClient;
     private final GrantClient grantClient;
     private final EventClient eventClient;
-
+ 
     @Override
     @Transactional
     public ComplianceResponseDTO createCompliance(ComplianceResponseDTO requestDto) {
-
+ 
         logger.info(
             "Validating target entity: {} with ID: {}",
             requestDto.getType(),
             requestDto.getEntityId()
         );
-
+ 
         ComplianceType type = requestDto.getType();
         Long entityId = requestDto.getEntityId();
-
+ 
         // ✅ STEP 1: Validate target entity
         if (type == ComplianceType.PROGRAM) {
-
+ 
             if (!newprogramrepository.existsByProgramId(entityId)) {
                 throw new ResourceNotFoundException(
                     "PROGRAM not found with ID: " + entityId
                 );
             }
-
+ 
         } else if (type == ComplianceType.GRANT) {
-
+ 
             grantClient.getGrantById(entityId); // Feign throws if not found
-
+ 
         } else if (type == ComplianceType.EVENT) {
-
+ 
             eventClient.getEventsByProgramId(entityId); // Feign throws if not found
-
+ 
         } else {
             throw new IllegalArgumentException(
                 "Unsupported Compliance Type: " + type
             );
         }
-
+ 
         // ✅ STEP 2: Save compliance record
         ComplianceRecord record = new ComplianceRecord();
         record.setEntityId(entityId);
@@ -88,46 +88,51 @@ public class ComplianceRecordserviceImpl implements ComplianceRecordService {
         );
         record.setDate(LocalDate.now());
         record.setNotes(requestDto.getNotes());
-
+ 
         ComplianceRecord saved = repository.save(record);
-
+ 
         // ✅ STEP 3: Cleanup only for PROGRAM
         if (type == ComplianceType.PROGRAM) {
             newprogramrepository.deleteByProgramId(entityId);
             logger.info("Deleted NewProgram entry for entityId {}", entityId);
         }
-
+ 
         logger.info("Compliance created successfully for entityId {}", entityId);
-
+ 
         return mapToDTO(saved);
     }
-
+ 
     @Override
     public List<ComplianceResponseDTO> getAllCompliance() {
         return repository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
-
+    
+    @Override
+    public List<NewProgram> getNewPrograms() {
+        return newprogramrepository.findAll();
+    }
+ 
     @Override
     public ComplianceResponseDTO getComplianceById(Long id) {
         ComplianceRecord record = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Compliance record not found with ID: " + id));
         return mapToDTO(record);
     }
-
+ 
     @Override
     public ComplianceResponseDTO updateCompliance(Long id, ComplianceRequestDTO requestDto) {
         ComplianceRecord existing = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Record not found to update with ID: " + id));
-
+ 
         existing.setResult(requestDto.getResult());
         existing.setNotes(requestDto.getNotes());
         existing.setType(requestDto.getType());
         
         return mapToDTO(repository.save(existing));
     }
-
+ 
     @Override
     public void deleteCompliance(Long id) {
         if (!repository.existsById(id)) {
@@ -171,9 +176,9 @@ public class ComplianceRecordserviceImpl implements ComplianceRecordService {
     }
     
     private CulturalProgramResponseDto mapToResponseDto(NewProgram program) {
-
+ 
         Long programId = program.getProgramId();
-
+ 
         return new CulturalProgramResponseDto(
                 programId,
                 program.getName(),
@@ -185,3 +190,4 @@ public class ComplianceRecordserviceImpl implements ComplianceRecordService {
         );
     }
 }
+ 
