@@ -49,4 +49,3 @@ public class JwtTokenUtil {
         return getAllClaimsFromToken(token).get("userId", Long.class);
     }
 }
-

@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.cultureconnect.notification.dto.CreateNotificationRequest;
 import com.cultureconnect.notification.dto.NotificationDTO;
-import com.cultureconnect.notification.dto.UniversalNotificationRequest;
+import com.cultureconnect.notification.dto.CreatelNotificationRequest;
 
 public interface NotificationService {
 
@@ -18,6 +18,6 @@ public interface NotificationService {
 
 	void deleteNotification(Long id);
 
-	void sendUniversalNotification(UniversalNotificationRequest request);
+	void sendUniversalNotification(CreatelNotificationRequest request);
 
 }

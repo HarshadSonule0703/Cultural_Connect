@@ -1,8 +1,0 @@
-package com.cultureconnect.programgrant.feign;
-
-import org.springframework.cloud.openfeign.FeignClient;
-
-@FeignClient(name = "complianceservice")
-public interface ComplianceClient {
-
-}

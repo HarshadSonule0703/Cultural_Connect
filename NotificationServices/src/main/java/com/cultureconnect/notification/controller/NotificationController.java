@@ -15,6 +15,7 @@ import com.cultureconnect.notification.dto.ApiResponse;
 import com.cultureconnect.notification.dto.CreateNotificationRequest;
 import com.cultureconnect.notification.dto.NotificationDTO;
 import com.cultureconnect.notification.dto.OtpRequestDTO;
+import com.cultureconnect.notification.dto.CreatelNotificationRequest;
 import com.cultureconnect.notification.service.EmailService;
 import com.cultureconnect.notification.service.NotificationService;
 
@@ -24,59 +25,57 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-	private final EmailService emailService;
-	private final NotificationService notificationService;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
-	public NotificationController(NotificationService notificationService, EmailService emailService) {
-		this.notificationService = notificationService;
-		this.emailService = emailService;
-	}
+    public NotificationController(NotificationService notificationService, EmailService emailService) {
+        this.notificationService = notificationService;
+        this.emailService = emailService;
+    }
 
-	// ================= SEND NOTIFICATION (OLD FLOW) =================
-	@PostMapping("/send")
-	public ApiResponse<NotificationDTO> sendNotification(@Valid @RequestBody CreateNotificationRequest request) {
+    // --- SENDING NOTIFICATIONS ---
 
-		return ApiResponse.success("Notification sent successfully", notificationService.sendNotification(request));
-	}
+    @PostMapping("/send")
+    public ApiResponse<NotificationDTO> send(@Valid @RequestBody CreateNotificationRequest request) {
+        return ApiResponse.success("Notification sent successfully", notificationService.sendNotification(request));
+    }
 
-	// ================= SEND OTP =================
-	@PostMapping("/sendOtp")
-	public void sendOtp(@RequestBody OtpRequestDTO dto) {
+    @PostMapping("/universal")
+    public ApiResponse<Void> sendUniversal(@Valid @RequestBody CreatelNotificationRequest request) {
+        notificationService.sendUniversalNotification(request);
+        return ApiResponse.success("Universal notification processed", null);
+    }
 
-		if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-			throw new IllegalArgumentException("Email must not be empty");
-		}
+    @PostMapping("/otp")
+    public ApiResponse<Void> sendOtp(@Valid @RequestBody OtpRequestDTO dto) {
+        // Validation logic moved to service or kept minimal here
+        emailService.sendOtpEmail(dto.getEmail(), dto.getOtp());
+        return ApiResponse.success("OTP sent successfully", null);
+    }
 
-		if (dto.getOtp() == null || dto.getOtp().isBlank()) {
-			throw new IllegalArgumentException("OTP must not be empty");
-		}
+    // --- RETRIEVAL ---
 
-		emailService.sendOtpEmail(dto.getEmail(), dto.getOtp());
-	}
+    @GetMapping
+    public ApiResponse<List<NotificationDTO>> getAll() {
+        return ApiResponse.success("All notifications fetched", notificationService.getAllNotifications());
+    }
 
-	// ================= GET ALL =================
-	@GetMapping
-	public ApiResponse<List<NotificationDTO>> getAllNotifications() {
-		return ApiResponse.success("All notifications fetched", notificationService.getAllNotifications());
-	}
+    @GetMapping("/user/{userId}")
+    public ApiResponse<List<NotificationDTO>> getByUser(@PathVariable Long userId) {
+        return ApiResponse.success("User notifications fetched", notificationService.getUserNotifications(userId));
+    }
 
-	// ================= GET BY USER =================
-	@GetMapping("/user/{userId}")
-	public ApiResponse<List<NotificationDTO>> getByUser(@PathVariable Long userId) {
-		return ApiResponse.success("Notifications fetched for user", notificationService.getUserNotifications(userId));
-	}
+    // --- ACTIONS ---
 
-	// ================= MARK AS READ =================
-	@PutMapping("/{id}/read")
-	public ApiResponse<Void> markAsRead(@PathVariable Long id) {
-		notificationService.markAsRead(id);
-		return ApiResponse.success("Notification marked as read", null);
-	}
+    @PutMapping("/{id}/read")
+    public ApiResponse<Void> markAsRead(@PathVariable Long id) {
+        notificationService.markAsRead(id);
+        return ApiResponse.success("Notification marked as read", null);
+    }
 
-	// ================= DELETE =================
-	@DeleteMapping("/{id}")
-	public ApiResponse<Void> deleteNotification(@PathVariable Long id) {
-		notificationService.deleteNotification(id);
-		return ApiResponse.success("Notification deleted successfully", null);
-	}
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        notificationService.deleteNotification(id);
+        return ApiResponse.success("Notification deleted", null);
+    }
 }

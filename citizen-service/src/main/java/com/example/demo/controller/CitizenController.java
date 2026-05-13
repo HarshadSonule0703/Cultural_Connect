@@ -2,60 +2,108 @@ package com.example.demo.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.client.NotificationClient;
 import com.example.demo.client.ProgramClient;
 import com.example.demo.dto.CitizenDTO;
-import com.example.demo.dto.CitizenDocumentDTO;
+import com.example.demo.dto.CreateNotificationRequest;
 import com.example.demo.dto.CulturalProgramResponseCitizenDto;
+import com.example.demo.dto.GrantApplicationRequestDto;
+import com.example.demo.dto.GrantApplicationResponseDto;
+import com.example.demo.dto.UpdateCitizenStatusDto;
 import com.example.demo.entity.Citizen;
 import com.example.demo.entity.CitizenDocument;
+import com.example.demo.enums.NotificationCategory;
+import com.example.demo.enums.Status;
 import com.example.demo.service.CitizenService;
 
 import jakarta.validation.Valid;
 
-//@CrossOrigin(origins = "http://localhost:5173")
+/**
+ * Controller for Citizen management. Integrated with Notification triggers and
+ * Admin management features.
+ */
 @RestController
 @RequestMapping("/api/citizens")
 public class CitizenController {
 
+	private static final Logger logger = LoggerFactory.getLogger(CitizenController.class);
+
 	private final CitizenService service;
-
 	private final ProgramClient programClientService;
-	 
-	public CitizenController(CitizenService service, ProgramClient programClientService) {
-			this.service = service;
-			this.programClientService=programClientService;
-		}
+	private final NotificationClient notificationClient;
 
+	public CitizenController(CitizenService service, ProgramClient programClientService,
+			NotificationClient notificationClient) {
+		this.service = service;
+		this.programClientService = programClientService;
+		this.notificationClient = notificationClient;
+	}
+
+	// ================= REGISTER =================
 	@PostMapping("/register")
 	public Citizen register(@Valid @RequestBody CitizenDTO dto) {
-		return service.registerCitizen(dto);
+		logger.info("REST Request: Registering citizen: {}", dto.getName());
+		Citizen citizen = service.registerCitizen(dto);
+		triggerNotification(citizen.getCitizenId(), citizen.getCitizenId(), NotificationCategory.GENERAL,
+				"Welcome to CultureConnect, " + citizen.getName()
+						+ "! Your citizen profile has been successfully created.");
+		return citizen;
 	}
+
+	// ================= UPDATE & STATUS =================
+	@PutMapping("/{id}")
+	public Citizen update(@PathVariable Long id, @RequestBody CitizenDTO dto) {
+		logger.info("REST Request: Updating citizen ID: {}", id);
+		Citizen updated = service.updateCitizen(id, dto);
+		triggerNotification(updated.getCitizenId(), updated.getCitizenId(), NotificationCategory.GENERAL,
+				"Security Notice: Your profile information was recently updated.");
+		return updated;
+	}
+
+	@PatchMapping("/{citizenId}/status")
+	public ResponseEntity<String> updateCitizenStatus(@PathVariable Long citizenId,
+			@RequestBody UpdateCitizenStatusDto dto) {
+		service.updateStatus(citizenId, dto);
+		return ResponseEntity.ok("Citizen Status Updated Successfully");
+	}
+
+	// ================= RETRIEVAL =================
 
 	@GetMapping("/{id}")
 	public Citizen getById(@PathVariable Long id) {
 		return service.getCitizenById(id);
 	}
 
+	@GetMapping("/by-email/{email}")
+	public Citizen getByEmail(@PathVariable String email) {
+		return service.getCitizenByEmail(email);
+	}
+
 	@GetMapping
 	public List<Citizen> getAll() {
 		return service.getAllCitizens();
 	}
-
-	@PutMapping("/{id}")
-	public Citizen update(@PathVariable Long id, @RequestBody CitizenDTO dto) {
-		return service.updateCitizen(id, dto);
+	
+	@GetMapping("/status/{status}")
+	public List<Citizen> getByStatus(@PathVariable Status status) {
+	    return service.getCitizensByStatus(status);
 	}
+
 
 	@DeleteMapping("/{id}")
 	public String delete(@PathVariable Long id) {
@@ -63,11 +111,28 @@ public class CitizenController {
 		return "Deleted successfully";
 	}
 
-	@PostMapping("/{id}/documents")
-	public CitizenDocument upload(@PathVariable Long id, @Valid @RequestBody CitizenDocumentDTO dto) {
+	// ================= DOCUMENTS =================
 
-		return service.uploadDocument(id, dto);
+//	@PostMapping("/{id}/documents")
+//	public CitizenDocument upload(@PathVariable Long id, @Valid @RequestBody CitizenDocumentDTO dto) {
+//		logger.info("REST Request: Uploading document for citizen ID: {}", id);
+//		CitizenDocument doc = service.uploadDocument(id, dto);
+//		triggerNotification(doc.getCitizenId(), doc.getDocumentId(), NotificationCategory.GENERAL,
+//				"Document Uploaded: Your " + doc.getDocType() + " has been added to your profile.");
+//
+//		return doc;
+//	}
+	@PostMapping("/{id}/documents")
+	public CitizenDocument uploadDocument(
+	        @PathVariable Long id,
+	        @RequestParam("file") MultipartFile file,
+	        @RequestParam("docType") String docType) {
+
+		logger.info("REST Request: Uploading document for citizen ID: {}", id);
+		
+	    return service.uploadDocument(id, file, docType);
 	}
+
 
 	@GetMapping("/{id}/documents")
 	public List<CitizenDocument> getDocs(@PathVariable Long id) {
@@ -79,11 +144,62 @@ public class CitizenController {
 		service.deleteDocument(docId);
 		return "Document deleted successfully";
 	}
+
+	// ================= EXTERNAL FEIGN ENDPOINTS =================
+
 	@GetMapping("/getAllCitizenProgram")
 	public ResponseEntity<List<CulturalProgramResponseCitizenDto>> getAllCitizenProgram() {
 		return programClientService.getAllProgramsForCitizen();
 	}
-	
-	 
 
+	@PostMapping("/applyProgram")
+	public ResponseEntity<?> applyProgram(
+	        @RequestBody GrantApplicationRequestDto dto) {
+
+	    try {
+	        GrantApplicationResponseDto response =
+	                programClientService.submitApplication(dto);
+
+	        return ResponseEntity.ok(response);
+
+	    } catch (Exception ex) {
+	        
+	        // ✅ HANDLE DUPLICATE APPLY (IMPORTANT)
+	        return ResponseEntity
+	                .badRequest()
+	                .body("Already applied for this program");
+	    }
+	}
+
+
+	@GetMapping("/checkApplication/{citizenId}/{programId}")
+	public ResponseEntity<Boolean> checkApplication(
+	        @PathVariable Long citizenId,
+	        @PathVariable Long programId) {
+
+	    return programClientService.checkApplication(citizenId, programId);
+	}
+
+	@GetMapping("/applications/{citizenId}")
+	public ResponseEntity<List<GrantApplicationResponseDto>> getApplicationsByCitizen(
+	        @PathVariable Long citizenId) {
+
+	    return programClientService.getApplicationsByCitizen(citizenId);
+	}
+
+	// ================= NOTIFICATION HELPER =================
+
+	private void triggerNotification(Long userId, Long entityId, NotificationCategory category, String message) {
+		try {
+			CreateNotificationRequest note = new CreateNotificationRequest();
+			note.setUserId(userId);
+			note.setEntityId(entityId);
+			note.setCategory(category);
+			note.setMessage(message);
+			notificationClient.sendNotification(note);
+			logger.info("Notification successfully sent for user ID: {}", userId);
+		} catch (Exception e) {
+			logger.error("Notification trigger failed for user {}: {}", userId, e.getMessage());
+		}
+	}
 }

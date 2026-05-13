@@ -71,5 +71,22 @@ public class UserService {
 	        return dto;
 	    }).toList();
 	}
+	
+	public List<UserReqDTO> getAllUsers() {
+	    // Fetch all users from the database
+	    List<User> users = repo.findAll();
+
+	    // Map the List of User entities to a List of UserReqDTOs
+	    return users.stream().map(user -> {
+	        UserReqDTO dto = new UserReqDTO();
+	        dto.setUserId(user.getUserId());
+	        dto.setName(user.getName());
+	        dto.setEmail(user.getEmail());
+	        dto.setRole(user.getRole());
+	        dto.setPhone(user.getPhone());
+	        // Map status if your DTO has it, as it's useful for the Admin Dashboard
+	        return dto;
+	    }).toList();
+	}
 
 }

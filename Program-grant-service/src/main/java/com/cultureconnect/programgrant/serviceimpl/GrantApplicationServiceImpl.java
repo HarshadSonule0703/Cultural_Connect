@@ -8,17 +8,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cultureconnect.programgrant.client.NotificationClient;
+import com.cultureconnect.programgrant.dto.CreateNotificationRequest;
 import com.cultureconnect.programgrant.dto.GrantApplicationRequestDto;
 import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
 import com.cultureconnect.programgrant.dto.GrantApprovalDto;
-import com.cultureconnect.programgrant.dto.UniversalNotificationRequest;
 import com.cultureconnect.programgrant.entity.CulturalProgram;
+import com.cultureconnect.programgrant.entity.Grant;
 import com.cultureconnect.programgrant.entity.GrantApplication;
+import com.cultureconnect.programgrant.enums.NotificationCategory; // Ensure this is imported
 import com.cultureconnect.programgrant.enums.Status;
 import com.cultureconnect.programgrant.exception.ResourceNotFoundException;
 import com.cultureconnect.programgrant.feign.CitizenClient;
 import com.cultureconnect.programgrant.repository.CulturalProgramRepository;
 import com.cultureconnect.programgrant.repository.GrantApplicationRepository;
+import com.cultureconnect.programgrant.repository.GrantRepository;
 import com.cultureconnect.programgrant.service.GrantApplicationService;
 import com.cultureconnect.programgrant.service.GrantService;
 
@@ -28,31 +31,50 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GrantApplicationServiceImpl implements GrantApplicationService {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(GrantApplicationServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(GrantApplicationServiceImpl.class);
 
     private final CitizenClient citizenClient;
     private final GrantApplicationRepository applicationRepository;
     private final CulturalProgramRepository programRepository;
     private final GrantService grantService;
-
     private final NotificationClient notificationClient;
-    /**
-     * Submit a new grant application.
-     */
+    private final GrantRepository grantRepository;
+
+//    @Override
+//    @Transactional
+//    public GrantApplicationResponseDto submitApplication(GrantApplicationRequestDto dto) {
+//        var citizen = citizenClient.getCitizenById(dto.getCitizenId());
+//
+//        CulturalProgram program = programRepository.findById(dto.getProgramId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + dto.getProgramId()));
+//
+//        GrantApplication application = new GrantApplication();
+//        application.setCitizenId(dto.getCitizenId());
+//        application.setProgramId(dto.getProgramId());
+//        application.setStatus(Status.PENDING);
+//        applicationRepository.save(application);
+//
+//       
+//        return mapToResponseDto(application, program.getName());
+//    }
     @Override
     @Transactional
-    public GrantApplicationResponseDto submitApplication(
-            GrantApplicationRequestDto dto) {
+    public GrantApplicationResponseDto submitApplication(GrantApplicationRequestDto dto) {
 
-        // ✅ Validate citizen via Feign
+        // ✅ ✅ CHECK BEFORE INSERT
+        boolean alreadyApplied =
+            applicationRepository.existsByCitizenIdAndProgramId(
+                dto.getCitizenId(), dto.getProgramId()
+            );
+
+        if (alreadyApplied) {
+        	throw new IllegalStateException("ALREADY_APPLIED");
+        }
+
         var citizen = citizenClient.getCitizenById(dto.getCitizenId());
 
-        // ✅ Validate program
         CulturalProgram program = programRepository.findById(dto.getProgramId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Program not found with ID: " + dto.getProgramId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
 
         GrantApplication application = new GrantApplication();
         application.setCitizenId(dto.getCitizenId());
@@ -60,170 +82,141 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
         application.setStatus(Status.PENDING);
 
         applicationRepository.save(application);
-
-
-try {
-        UniversalNotificationRequest notification = new UniversalNotificationRequest();
-        notification.setUserId(application.getCitizenId());
-        notification.setEmail(citizen.getEmail());
-        notification.setCategory("GRANT");
-        notification.setEntityId(application.getApplicationId());
-        notification.setMessage(
-                "✅ Your grant application for program '" +
-                program.getName() +
-                "' has been submitted successfully."
+        // ✅ FIXED: Use the centralized notification helper
+        sendNotificationHelper(
+            application.getCitizenId(),
+            citizen.getEmail(),
+            application.getApplicationId(),
+            NotificationCategory.GRANT, // ✅ Pass Enum, not String
+            "✅ Your grant application for program '" + program.getName() + "' has been submitted successfully."
         );
-
-        notificationClient.sendUniversalNotification	(notification);
-    } catch (Exception ex) {
-        logger.warn("Notification service unavailable. Application submitted anyway.");
-    }
 
 
         return mapToResponseDto(application, program.getName());
     }
 
-    /**
-     * Approve or reject a grant application.
-     */
+
+
     @Override
     @Transactional
-    public GrantApplicationResponseDto updateApplicationStatus(
-            Long id, GrantApprovalDto approvalDto) {
-
-        logger.info("Updating Application ID {} to status {}",
-                id, approvalDto.getStatus());
-
+    public GrantApplicationResponseDto updateApplicationStatus(Long id, GrantApprovalDto approvalDto) {
         GrantApplication app = applicationRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Application not found with ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + id));
 
-        // ✅ Prevent duplicate approval
         if (app.getStatus() == Status.APPROVED) {
-            throw new IllegalStateException(
-                    "Application is already approved");
+            throw new IllegalStateException("Application is already approved");
         }
 
-        // ✅ Approval business rules
         if (approvalDto.getStatus() == Status.APPROVED) {
-
-            if (approvalDto.getApprovedAmount() == null
-                    || approvalDto.getApprovedAmount() <= 0) {
-                throw new IllegalArgumentException(
-                        "Approved amount must be positive");
+            if (approvalDto.getApprovedAmount() == null || approvalDto.getApprovedAmount() <= 0) {
+                throw new IllegalArgumentException("Approved amount must be positive");
             }
-
-            logger.info("Triggering grant disbursal for Application ID {}", id);
             grantService.disburseGrant(app, approvalDto.getApprovedAmount());
         }
 
         app.setStatus(approvalDto.getStatus());
         applicationRepository.save(app);
-        
 
-     // ✅ Fetch citizen details for email
-         var citizen = citizenClient.getCitizenById(app.getCitizenId());
+        var citizen = citizenClient.getCitizenById(app.getCitizenId());
 
-         // 🔔 SEND NOTIFICATION (Approved / Rejected)
-         try {
-             UniversalNotificationRequest notification = new UniversalNotificationRequest();
-             notification.setUserId(app.getCitizenId());
-             notification.setEmail(citizen.getEmail());
-             notification.setCategory("GRANT");
-             notification.setEntityId(app.getApplicationId());
+        // ✅ FIXED: Using Enum and helper
+        String message = (approvalDto.getStatus() == Status.APPROVED)
+                ? "🎉 Congratulations! Your grant application has been APPROVED."
+                : "❌ We regret to inform you that your grant application has been REJECTED.";
 
-             String message =
-                     approvalDto.getStatus() == Status.APPROVED
-                             ? "🎉 Congratulations! Your grant application has been APPROVED."
-                             : "❌ We regret to inform you that your grant application has been REJECTED.";
-
-             notification.setMessage(message);
-
-             notificationClient.sendUniversalNotification(notification);
-         } catch (Exception ex) {
-             logger.warn("Failed to send application status notification");
-         }
-
+        sendNotificationHelper(
+            app.getCitizenId(),
+            citizen.getEmail(),
+            app.getApplicationId(),
+            NotificationCategory.GRANT,
+            message
+        );
 
         return mapToResponseDto(app);
     }
 
-    /**
-     * Get all applications for a citizen.
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public List<GrantApplicationResponseDto> getApplicationsByCitizen(
-            Long citizenId) {
+    // ======================================================
+    // ✅ HELPER METHOD TO AVOID REPEATING ERRORS
+    // ======================================================
+    private void sendNotificationHelper(Long userId, String email, Long entityId, NotificationCategory category, String message) {
+        try {
+            CreateNotificationRequest request = new CreateNotificationRequest();
+            request.setUserId(userId);
+            request.setEmail(email); // Use setMail or setEmail based on your DTO field name
+            request.setEntityId(entityId);
+            request.setCategory(category); // ✅ Set as Enum
+            request.setMessage(message);
 
-        return applicationRepository.findByCitizenId(citizenId)
-                .stream()
-                .map(this::mapToResponseDto)
-                .toList();
+            // ✅ Call sendNotification (The main endpoint we set up earlier)
+            notificationClient.sendNotification(request);
+            logger.info("Notification successfully queued for Citizen: {}", userId);
+        } catch (Exception ex) {
+            logger.warn("Notification failed for user {}: {}", userId, ex.getMessage());
+        }
     }
 
-    /**
-     * Get all applications.
-     */
+    // ... Other methods (getAll, getById, etc.) remain unchanged ...
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<GrantApplicationResponseDto> getApplicationsByCitizen(Long citizenId) {
+        return applicationRepository.findByCitizenId(citizenId).stream().map(this::mapToResponseDto).toList();
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<GrantApplicationResponseDto> getAllApplications() {
-
-        return applicationRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDto)
-                .toList();
+        return applicationRepository.findAll().stream().map(this::mapToResponseDto).toList();
     }
 
-    /**
-     * Get application by ID.
-     */
     @Override
     @Transactional(readOnly = true)
     public GrantApplicationResponseDto getApplicationById(Long id) {
-
         GrantApplication app = applicationRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Application not found with ID: " + id));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + id));
         return mapToResponseDto(app);
     }
 
-    /**
-     * Get applications by status.
-     */
     @Override
     @Transactional(readOnly = true)
-    public List<GrantApplicationResponseDto> getApplicationsByStatus(
-            Status status) {
-
-        return applicationRepository.findByStatus(status)
-                .stream()
-                .map(this::mapToResponseDto)
-                .toList();
+    public List<GrantApplicationResponseDto> getApplicationsByStatus(Status status) {
+        return applicationRepository.findByStatus(status).stream().map(this::mapToResponseDto).toList();
     }
 
-    /* ======================================================
-       INTERNAL MAPPERS
-       ====================================================== */
-
-    private GrantApplicationResponseDto mapToResponseDto(
-            GrantApplication app) {
-
-        CulturalProgram program = programRepository.findById(
-                        app.getProgramId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Program not found with ID: "
-                                        + app.getProgramId()));
-
+    private GrantApplicationResponseDto mapToResponseDto(GrantApplication app) {
+        CulturalProgram program = programRepository.findById(app.getProgramId())
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found with ID: " + app.getProgramId()));
         return mapToResponseDto(app, program.getName());
     }
 
-    private GrantApplicationResponseDto mapToResponseDto(
-            GrantApplication app, String programName) {
+    private GrantApplicationResponseDto mapToResponseDto(GrantApplication app, String programName) {
+
+        CulturalProgram program = programRepository.findById(app.getProgramId())
+            .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+
+        // ✅ GET CITIZEN
+        var citizen = citizenClient.getCitizenById(app.getCitizenId());
+
+        // ✅ GET GRANT AMOUNT (if approved)
+        Double grantAmount = null;
+
+        if (app.getStatus() == Status.APPROVED) {
+            Grant grant = grantRepository
+                    .findByCitizenIdAndProgramId(app.getCitizenId(), app.getProgramId());
+
+            if (grant != null) {
+                grantAmount = grant.getAmount();
+            }
+        }
+
+        // ✅ CALCULATE TOTAL ALLOCATED
+        Double allocated = grantRepository
+                .getTotalAllocatedAmountByProgramId(app.getProgramId());
+
+        allocated = (allocated == null) ? 0.0 : allocated;
+
+        // ✅ REMAINING BUDGET
+        Double remainingBudget = program.getBudget() - allocated;
 
         return new GrantApplicationResponseDto(
                 app.getApplicationId(),
@@ -231,7 +224,16 @@ try {
                 app.getProgramId(),
                 programName,
                 app.getSubmittedDate(),
-                app.getStatus()
+                app.getStatus(),
+                grantAmount,
+
+                // ✅ NEW FIELDS
+                citizen.getName(),
+                citizen.getEmail(),
+                program.getBudget(),
+                remainingBudget  
+                // ✅ IMPORTANT FIX
         );
     }
+
 }

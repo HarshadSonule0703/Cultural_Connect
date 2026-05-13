@@ -6,4 +6,5 @@ public interface RegistrationService {
 
 	public UserDTO registerUser(UserDTO userDto);
 	public String deleteUserByAdmin(Long userId) ;
+	public UserDTO registerUserByAdmin(UserDTO userDto);
 }

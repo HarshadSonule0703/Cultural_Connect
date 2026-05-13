@@ -1,20 +1,21 @@
 package com.cultureconnect.eventresource.controller;
+
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
- 
+
 import org.slf4j.Logger;
 
 import org.slf4j.LoggerFactory;
- 
+
 import org.springframework.web.bind.annotation.*;
- 
+
 import com.cultureconnect.eventresource.dto.*;
 
 import com.cultureconnect.eventresource.service.EventService;
- 
+
 import java.util.List;
- 
+
 /**
 
 * REST Controller for managing Event entities.
@@ -30,13 +31,12 @@ import java.util.List;
 @RequestMapping("/api/events")
 
 public class EventController {
- 
+
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
- 
-    
+
 
     private final EventService eventService;
- 
+
     /**
 
      * Creates a new event entry.
@@ -60,7 +60,7 @@ public class EventController {
         return createdEvent;
 
     }
- 
+
     /**
 
      * Retrieves all events stored in the database.
@@ -82,7 +82,7 @@ public class EventController {
         return events;
 
     }
- 
+
     /**
 
      * Retrieves details of a specific event by its ID.
@@ -93,7 +93,7 @@ public class EventController {
 
      */
 
-    @GetMapping("/{id}")
+    @GetMapping("/geteventbyid/{id}")
 
     public EventResponseDto getEventById(@PathVariable Long id) {
 
@@ -102,7 +102,7 @@ public class EventController {
         return eventService.getEventById(id);
 
     }
- 
+
     /**
 
      * Updates an existing event's information.
@@ -115,7 +115,7 @@ public class EventController {
 
      */
 
-    @PutMapping("/{id}")
+    @PutMapping("/updateevent/{id}")
 
     public EventResponseDto updateEvent(@PathVariable Long id,
 
@@ -130,7 +130,7 @@ public class EventController {
         return updatedEvent;
 
     }
- 
+
     /**
 
      * Deletes an event record from the system.
@@ -175,8 +175,8 @@ public class EventController {
         return eventService.getAllApprovedEvents();
 
     }
-    
-    
+
+
     @GetMapping("/program/{programId}")
 
     public List<Long> getEventsIdByProgramId(@PathVariable Long programId) {
@@ -186,10 +186,7 @@ public class EventController {
         return eventService.getEventsIdByProgramId(programId);
 
     }
-    
+
 
 }
- 
-
- 
  
