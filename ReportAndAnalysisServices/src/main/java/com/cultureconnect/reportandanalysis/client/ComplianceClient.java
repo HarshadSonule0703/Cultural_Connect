@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 // 1. CHANGE THIS IMPORT
 import com.cultureconnect.reportandanalysis.dto.ComplianceDTO; 
 
-@FeignClient(name = "COMPLIANCE-SERVICE")
+@FeignClient(name = "complianceservice")
 public interface ComplianceClient {
     
-    @GetMapping("/api/compliance/list")
+    @GetMapping("/compliance/list")
     List<ComplianceDTO> getAllComplianceRecords(); // 2. CHANGE THIS RETURN TYPE
 }

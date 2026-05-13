@@ -84,6 +84,20 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     @Transactional
+    public void deleteReport(Long id) {
+        log.info("Attempting to delete report with ID: {}", id);
+        
+        // Find the report or throw your existing exception if it doesn't exist
+        Report report = reportRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cannot delete: No report found with ID: " + id));
+        
+        reportRepo.delete(report);
+        log.info("Successfully deleted report with ID: {}", id);
+    }
+
+
+    @Override
+    @Transactional
     public ReportDTO generateReport(Report.ReportScope scope) {
         log.info("Generating a new report via OpenFeign for scope: {}", scope);
 

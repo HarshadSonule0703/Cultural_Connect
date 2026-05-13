@@ -11,5 +11,6 @@ public interface ReportService {
     ReportDTO generateReport(Report.ReportScope scope);
     List<ReportDTO> getAllReports();
     ReportDTO getReportById(Long id);
-	
+
+    void deleteReport(Long id);
 }
