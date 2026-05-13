@@ -1,12 +1,16 @@
 package com.example.demo.serviceImpl;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.example.demo.dto.CitizenDTO;
-import com.example.demo.dto.CitizenDocumentDTO;
 import com.example.demo.dto.UniversalNotificationRequest;
 import com.example.demo.dto.UpdateCitizenStatusDto;
 import com.example.demo.dto.UserRegisterRequestDTO;
@@ -185,21 +189,69 @@ public class CitizenServiceImpl implements CitizenService {
 	}
 
 	// ✅ UPLOAD DOCUMENT (FIXED ✅)
+//	@Override
+//	public CitizenDocument uploadDocument(Long id, CitizenDocumentDTO dto) {
+//
+//		// ✅ Ensure citizen exists (business validation)
+//		getCitizenById(id);
+//
+//		CitizenDocument doc = new CitizenDocument();
+//		doc.setCitizenId(id); // ✅ FIX
+//		doc.setDocType(dto.getDocType());
+//		doc.setFileUri(dto.getFileUri());
+//		doc.setVerificationStatus("PENDING");
+//
+//		return documentRepository.save(doc);
+//	}
+
 	@Override
-	public CitizenDocument uploadDocument(Long id, CitizenDocumentDTO dto) {
+	public CitizenDocument uploadDocument(Long id, MultipartFile file, String docType) {
 
-		// ✅ Ensure citizen exists (business validation)
-		getCitizenById(id);
+	    getCitizenById(id);
 
-		CitizenDocument doc = new CitizenDocument();
-		doc.setCitizenId(id); // ✅ FIX
-		doc.setDocType(dto.getDocType());
-		doc.setFileUri(dto.getFileUri());
-		doc.setVerificationStatus("PENDING");
+	    try {
+	        String contentType = file.getContentType();
 
-		return documentRepository.save(doc);
+	        if (!contentType.equals("application/pdf") &&
+	            !contentType.startsWith("image/")) {
+
+	            throw new RuntimeException("Only PDF and Image files allowed");
+	        }
+
+	        String uploadDir = "uploads/";
+	        File dir = new File(uploadDir);
+	        if (!dir.exists()) dir.mkdirs();
+
+	        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+	        Path path = Paths.get(uploadDir + fileName);
+
+	        Files.copy(
+	            file.getInputStream(),
+	            path,
+	            java.nio.file.StandardCopyOption.REPLACE_EXISTING
+	        );
+
+	        CitizenDocument doc = new CitizenDocument();
+	        doc.setCitizenId(id);
+	        doc.setDocType(docType);
+	        doc.setFileUri("/uploads/" + fileName);
+	        doc.setVerificationStatus("PENDING");
+	        
+	     // ✅ Update Citizen Status to PENDING
+	        Citizen citizen = repository.findById(id)
+	                .orElseThrow(() -> new RuntimeException("Citizen not found"));
+
+	        citizen.setStatus(Status.PENDING);
+	        repository.save(citizen);
+	        
+
+	        return documentRepository.save(doc);
+
+	    } catch (Exception e) {
+	        throw new RuntimeException("File upload failed");
+	    }
 	}
-
 	// ✅ GET DOCUMENTS (FIXED ✅)
 	@Override
 	public List<CitizenDocument> getDocuments(Long id) {
@@ -233,6 +285,10 @@ public class CitizenServiceImpl implements CitizenService {
 	public Citizen getCitizenByEmail(String email) {
 	    return repository.findByEmail(email)
 	        .orElseThrow(() -> new RuntimeException("Citizen not found"));
+	}
+	
+	public List<Citizen> getCitizensByStatus(Status status) {
+	    return repository.findByStatus(status);
 	}
 
 
