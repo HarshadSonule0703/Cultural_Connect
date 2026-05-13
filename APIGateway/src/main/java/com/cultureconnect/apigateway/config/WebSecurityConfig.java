@@ -51,7 +51,7 @@ public class WebSecurityConfig {
                 .hasAnyRole("MANAGER","ADMIN","CITIZEN")
                 
                 .pathMatchers("/api/applications/**")
-                .hasAnyRole("MANAGER","ADMIN")
+                .hasAnyRole("MANAGER","ADMIN","CITIZEN")
                 
                 .pathMatchers("/api/events/**")
                 .hasAnyRole("MANAGER","ADMIN","CITIZEN")
