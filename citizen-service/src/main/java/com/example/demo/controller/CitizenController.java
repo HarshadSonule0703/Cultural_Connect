@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.client.NotificationClient;
 import com.example.demo.client.ProgramClient;
 import com.example.demo.dto.CitizenDTO;
-import com.example.demo.dto.CitizenDocumentDTO;
 import com.example.demo.dto.CreateNotificationRequest;
 import com.example.demo.dto.CulturalProgramResponseCitizenDto;
 import com.example.demo.dto.GrantApplicationRequestDto;
@@ -27,6 +28,7 @@ import com.example.demo.dto.UpdateCitizenStatusDto;
 import com.example.demo.entity.Citizen;
 import com.example.demo.entity.CitizenDocument;
 import com.example.demo.enums.NotificationCategory;
+import com.example.demo.enums.Status;
 import com.example.demo.service.CitizenService;
 
 import jakarta.validation.Valid;
@@ -96,6 +98,12 @@ public class CitizenController {
 	public List<Citizen> getAll() {
 		return service.getAllCitizens();
 	}
+	
+	@GetMapping("/status/{status}")
+	public List<Citizen> getByStatus(@PathVariable Status status) {
+	    return service.getCitizensByStatus(status);
+	}
+
 
 	@DeleteMapping("/{id}")
 	public String delete(@PathVariable Long id) {
@@ -105,15 +113,26 @@ public class CitizenController {
 
 	// ================= DOCUMENTS =================
 
+//	@PostMapping("/{id}/documents")
+//	public CitizenDocument upload(@PathVariable Long id, @Valid @RequestBody CitizenDocumentDTO dto) {
+//		logger.info("REST Request: Uploading document for citizen ID: {}", id);
+//		CitizenDocument doc = service.uploadDocument(id, dto);
+//		triggerNotification(doc.getCitizenId(), doc.getDocumentId(), NotificationCategory.GENERAL,
+//				"Document Uploaded: Your " + doc.getDocType() + " has been added to your profile.");
+//
+//		return doc;
+//	}
 	@PostMapping("/{id}/documents")
-	public CitizenDocument upload(@PathVariable Long id, @Valid @RequestBody CitizenDocumentDTO dto) {
-		logger.info("REST Request: Uploading document for citizen ID: {}", id);
-		CitizenDocument doc = service.uploadDocument(id, dto);
-		triggerNotification(doc.getCitizenId(), doc.getDocumentId(), NotificationCategory.GENERAL,
-				"Document Uploaded: Your " + doc.getDocType() + " has been added to your profile.");
+	public CitizenDocument uploadDocument(
+	        @PathVariable Long id,
+	        @RequestParam("file") MultipartFile file,
+	        @RequestParam("docType") String docType) {
 
-		return doc;
+		logger.info("REST Request: Uploading document for citizen ID: {}", id);
+		
+	    return service.uploadDocument(id, file, docType);
 	}
+
 
 	@GetMapping("/{id}/documents")
 	public List<CitizenDocument> getDocs(@PathVariable Long id) {
@@ -161,6 +180,12 @@ public class CitizenController {
 	    return programClientService.checkApplication(citizenId, programId);
 	}
 
+	@GetMapping("/applications/{citizenId}")
+	public ResponseEntity<List<GrantApplicationResponseDto>> getApplicationsByCitizen(
+	        @PathVariable Long citizenId) {
+
+	    return programClientService.getApplicationsByCitizen(citizenId);
+	}
 
 	// ================= NOTIFICATION HELPER =================
 

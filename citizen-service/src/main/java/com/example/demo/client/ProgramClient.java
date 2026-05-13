@@ -26,5 +26,9 @@ public interface ProgramClient {
 	        @PathVariable Long citizenId,
 	        @PathVariable Long programId);
 
+	@GetMapping("/api/applications/citizen/{citizenId}")
+	ResponseEntity<List<GrantApplicationResponseDto>> getApplicationsByCitizen(
+	        @PathVariable Long citizenId);
+	
 
 }

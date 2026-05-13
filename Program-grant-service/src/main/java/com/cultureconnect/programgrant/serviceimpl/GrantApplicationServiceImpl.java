@@ -13,6 +13,7 @@ import com.cultureconnect.programgrant.dto.GrantApplicationRequestDto;
 import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
 import com.cultureconnect.programgrant.dto.GrantApprovalDto;
 import com.cultureconnect.programgrant.entity.CulturalProgram;
+import com.cultureconnect.programgrant.entity.Grant;
 import com.cultureconnect.programgrant.entity.GrantApplication;
 import com.cultureconnect.programgrant.enums.NotificationCategory; // Ensure this is imported
 import com.cultureconnect.programgrant.enums.Status;
@@ -20,6 +21,7 @@ import com.cultureconnect.programgrant.exception.ResourceNotFoundException;
 import com.cultureconnect.programgrant.feign.CitizenClient;
 import com.cultureconnect.programgrant.repository.CulturalProgramRepository;
 import com.cultureconnect.programgrant.repository.GrantApplicationRepository;
+import com.cultureconnect.programgrant.repository.GrantRepository;
 import com.cultureconnect.programgrant.service.GrantApplicationService;
 import com.cultureconnect.programgrant.service.GrantService;
 
@@ -36,6 +38,7 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
     private final CulturalProgramRepository programRepository;
     private final GrantService grantService;
     private final NotificationClient notificationClient;
+    private final GrantRepository grantRepository;
 
 //    @Override
 //    @Transactional
@@ -187,13 +190,50 @@ public class GrantApplicationServiceImpl implements GrantApplicationService {
     }
 
     private GrantApplicationResponseDto mapToResponseDto(GrantApplication app, String programName) {
+
+        CulturalProgram program = programRepository.findById(app.getProgramId())
+            .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+
+        // ✅ GET CITIZEN
+        var citizen = citizenClient.getCitizenById(app.getCitizenId());
+
+        // ✅ GET GRANT AMOUNT (if approved)
+        Double grantAmount = null;
+
+        if (app.getStatus() == Status.APPROVED) {
+            Grant grant = grantRepository
+                    .findByCitizenIdAndProgramId(app.getCitizenId(), app.getProgramId());
+
+            if (grant != null) {
+                grantAmount = grant.getAmount();
+            }
+        }
+
+        // ✅ CALCULATE TOTAL ALLOCATED
+        Double allocated = grantRepository
+                .getTotalAllocatedAmountByProgramId(app.getProgramId());
+
+        allocated = (allocated == null) ? 0.0 : allocated;
+
+        // ✅ REMAINING BUDGET
+        Double remainingBudget = program.getBudget() - allocated;
+
         return new GrantApplicationResponseDto(
                 app.getApplicationId(),
                 app.getCitizenId(),
                 app.getProgramId(),
                 programName,
                 app.getSubmittedDate(),
-                app.getStatus()
+                app.getStatus(),
+                grantAmount,
+
+                // ✅ NEW FIELDS
+                citizen.getName(),
+                citizen.getEmail(),
+                program.getBudget(),
+                remainingBudget  
+                // ✅ IMPORTANT FIX
         );
     }
+
 }

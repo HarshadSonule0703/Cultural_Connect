@@ -1,8 +1,8 @@
-package com.cultureconnect.programgrant.dto;
+package com.cultureconnect.ComplianceAudit.dto;
 
 import java.time.LocalDateTime;
 
-import com.cultureconnect.programgrant.enums.Status;
+import com.cultureconnect.ComplianceAudit.enums.Status;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,12 +22,4 @@ public class GrantApplicationResponseDto {
     private String programName; // Changed from programTitle to match Entity
     private LocalDateTime submittedDate; // Changed from LocalDate to match Entity
     private Status status;
-    private Double grantAmount;
-    
-    private String citizenName;
-    private String citizenEmail;
-    private Double programBudget;
-    private Double remainingBudget;
-
-
 }
