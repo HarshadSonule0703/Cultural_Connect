@@ -1,9 +1,15 @@
 package com.cultureconnect.reportandanalysis.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
 public class ComplianceDTO {
+    
+    @JsonProperty("complianceId") // Maps the incoming JSON 'complianceId' to 'id'
     private Long id;
-    private String status; // This will catch your "VERIFIED", "PENDING", etc.
+
+    @JsonProperty("result")       // Maps the incoming JSON 'result' to 'status'
+    private String status; 
 }

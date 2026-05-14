@@ -5,12 +5,15 @@ import java.util.List;
 import com.cultureconnect.programgrant.dto.GrantApplicationRequestDto;
 import com.cultureconnect.programgrant.dto.GrantApplicationResponseDto;
 import com.cultureconnect.programgrant.dto.GrantApprovalDto;
+import com.cultureconnect.programgrant.entity.GrantApplication;
 import com.cultureconnect.programgrant.enums.Status;
 
 public interface GrantApplicationService {
 	GrantApplicationResponseDto submitApplication(GrantApplicationRequestDto requestDto);
 
 	List<GrantApplicationResponseDto> getAllApplications();
+	
+	List<GrantApplication> getAllApplicationsForReport();
 
 	GrantApplicationResponseDto getApplicationById(Long id);
 
